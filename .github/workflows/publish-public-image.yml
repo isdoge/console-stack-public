@@ -47,3 +47,19 @@ jobs:
       - name: Record digest
         run: |
           docker buildx imagetools inspect "ghcr.io/${{ github.repository_owner }}/console-stack-public:${{ steps.meta.outputs.short_src }}"
+      - name: Make package public
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          OWNER="${{ github.repository_owner }}"
+          PKG="console-stack-public"
+          # link to repo (idempotent-ish)
+          curl -sS -X PUT             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer ${GH_TOKEN}"             "https://api.github.com/user/packages/container/${PKG}/package_links/${{ github.repository_id }}" || true
+          # set visibility public
+          code=$(curl -sS -o /tmp/vis.out -w "%{http_code}" -X PUT             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer ${GH_TOKEN}"             -H "Content-Type: application/json"             "https://api.github.com/user/packages/container/${PKG}/visibility"             -d '{"visibility":"public"}')
+          echo "visibility_http=$code"
+          cat /tmp/vis.out || true
+          # also try repo-linked path
+          curl -sS -X PUT             -H "Accept: application/vnd.github+json"             -H "Authorization: Bearer ${GH_TOKEN}"             -H "Content-Type: application/json"             "https://api.github.com/user/packages/container/${PKG}/visibility"             -d '{"visibility":"public"}' || true
+
