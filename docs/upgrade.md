@@ -28,29 +28,71 @@ curl -fsS http://127.0.0.1:8081/api/health
 
 ## 3. 离线升级（目标机无外网 / 无 registry）
 
-在**能联网**的机器上准备两个文件：
+在**能联网**的机器上，使用专门准备离线包的干净检出，准备源码 bundle、镜像和校验文件。下面两段使用 Bash；任一步失败立即停止。`IMAGE` 必须取发布回执中与目标源码兼容的已发布镜像；纯文档提交可继续使用上一版镜像，不假设每个源码提交都有镜像 tag。
 
 ```bash
-NEW=<新版本 commit>
-git -C console-stack-public bundle create console-stack-public-$NEW.bundle $NEW
-docker pull ghcr.io/isdoge/console-stack-public:sha-${NEW:0:7}
-docker save ghcr.io/isdoge/console-stack-public:sha-${NEW:0:7} | gzip > console-stack-public-${NEW:0:7}.tar.gz
-# 首次离线安装还需要：docker save postgres:16-alpine | gzip > postgres-16-alpine.tar.gz
+set -euo pipefail
+SOURCE="$PWD/console-stack-public"
+NEW="<新版本源码 commit 或 tag>"
+IMAGE="ghcr.io/isdoge/console-stack-public:sha-<已发布镜像版本>"
+git -C "$SOURCE" fetch origin
+NEW=$(git -C "$SOURCE" rev-parse --verify "${NEW}^{commit}")
+SHORT=$(printf '%.7s' "$NEW")
+OUT="$PWD/console-stack-offline-$SHORT"
+mkdir "$OUT"                            # 新建目录；不覆盖已有离线包
+
+# bundle 必须导出命名引用；裸 commit SHA 不会成为 bundle 的导出头。
+git -C "$SOURCE" switch --detach "$NEW"
+git -C "$SOURCE" bundle create "$OUT/source.bundle" HEAD
+git -C "$SOURCE" bundle verify "$OUT/source.bundle"
+test "$(git bundle list-heads "$OUT/source.bundle" HEAD)" = "$NEW HEAD"
+printf '%s\n' "$NEW" > "$OUT/commit.txt"
+
+docker pull --platform linux/amd64 "$IMAGE"
+printf '%s\n' "$IMAGE" > "$OUT/image.txt"
+docker image save -o "$OUT/image.tar" "$IMAGE"
+gzip "$OUT/image.tar"
+(cd "$OUT" && shasum -a 256 source.bundle image.tar.gz commit.txt image.txt > SHA256SUMS)
+# 首次离线安装还须另带 postgres:16-alpine 镜像；既有实例已具备。
 ```
 
-拷到目标机后：
+把整个 `console-stack-offline-<短 SHA>` 目录拷到目标机。在既有安装的仓库根运行：
 
 ```bash
-cd console-stack-public
-git fetch /path/to/console-stack-public-$NEW.bundle $NEW && git checkout FETCH_HEAD
-gunzip -c /path/to/console-stack-public-${NEW:0:7}.tar.gz | docker load
-sed -i.bak "s#^CONSOLE_IMAGE=.*#CONSOLE_IMAGE=ghcr.io/isdoge/console-stack-public:sha-${NEW:0:7}#" .env && rm .env.bak
-# 之后与在线升级相同：先备份，再 migrate → check → up -d → health
-docker compose run --rm console-schema migrate
-docker compose run --rm console-schema check
-docker compose up -d console
-curl -fsS http://127.0.0.1:8081/api/health
+set -euo pipefail
+OFFLINE="/path/to/console-stack-offline-<短 SHA>"
+(cd "$OFFLINE" && shasum -a 256 -c SHA256SUMS)
+NEW=$(cat "$OFFLINE/commit.txt")
+SHORT=$(printf '%.7s' "$NEW")
+
+# 先停应用，再备份，避免迁移期间继续写入；备份失败就停在此处排障。
+docker compose stop console
+mkdir -p backups
+BACKUP="backups/console-$(date +%Y%m%d-%H%M%S).dump"
+docker compose exec -T console-postgres sh -c \
+  'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' > "$BACKUP"
+test -s "$BACKUP"
+
+git bundle verify "$OFFLINE/source.bundle"
+git fetch "$OFFLINE/source.bundle" HEAD
+test "$(git rev-parse FETCH_HEAD)" = "$NEW"
+git switch --detach FETCH_HEAD
+gunzip -c "$OFFLINE/image.tar.gz" > "$OFFLINE/image.tar"
+docker image load -i "$OFFLINE/image.tar"
+IMAGE=$(cat "$OFFLINE/image.txt")
+docker image inspect "$IMAGE" >/dev/null
+# 安装时可能未写 CONSOLE_IMAGE；统一替换或追加，不依赖该键原先存在。
+awk -v image="$IMAGE" '!/^CONSOLE_IMAGE=/ { print } END { print "CONSOLE_IMAGE=" image }' .env > .env.offline-new
+chmod 600 .env.offline-new
+mv .env.offline-new .env
+
+docker compose run --rm --pull never console-schema migrate
+docker compose run --rm --pull never console-schema check
+docker compose up -d --no-build --pull never console
+curl --retry 20 --retry-connrefused --retry-delay 1 -fsS http://127.0.0.1:8081/api/health
 ```
+
+`source.bundle` 用 `HEAD` 导出并按 `commit.txt` 核对目标提交；镜像从本地归档加载，`--pull never` 与 `--no-build` 保证目标机不需要 registry、npm 或 pip。失败时保留升级前 dump 和离线包，排障后再继续。
 
 离线机器上**不要** `docker compose build`：前端 `npm ci` 与后端 `pip install` 需要包仓库。若必须离线源码构建，先在联网机器上用同一 lockfile 预热 npm/pip 缓存，前端命令为：
 
