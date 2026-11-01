@@ -1,0 +1,105 @@
+/* 主题共用：文字层级与页面底色兜底 */
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+}
+
+html {
+  background: #3d4eaa;
+}
+
+html:has([data-theme='classic']) {
+  background: #0d1117;
+}
+
+html:has([data-theme='light']) {
+  background: #f6f8fa;
+}
+
+html:has([data-theme='glow']) {
+  background: #050510;
+}
+
+body {
+  background: transparent;
+  color: #ffffff;
+}
+
+[data-theme='classic'] {
+  color: #c9d1d9;
+  --ui-text-primary: #f0f6fc;
+  --ui-text-secondary: #c9d1d9;
+  --ui-text-muted: #8b949e;
+  --ui-text-faint: #6e7681;
+  --ui-accent-blue: #58a6ff;
+  --ui-accent-pink: #f472b6;
+  --ui-accent-green: #3fb950;
+  --ui-accent-purple: #a371f7;
+}
+
+[data-theme='light'] {
+  color: #1f2328;
+  --ui-text-primary: #1f2328;
+  --ui-text-secondary: #454c54;
+  --ui-text-muted: #656d76;
+  --ui-text-faint: #8b949e;
+  --ui-accent-blue: #0969da;
+  --ui-accent-pink: #cf222e;
+  --ui-accent-green: #1f883d;
+  --ui-accent-purple: #8250df;
+}
+
+[data-theme='glass'] {
+  color: #ffffff;
+  --ui-text-primary: #ffffff;
+  --ui-text-secondary: rgba(255, 255, 255, 0.95);
+  --ui-text-muted: rgba(255, 255, 255, 0.82);
+  --ui-text-faint: rgba(255, 255, 255, 0.7);
+  --ui-accent-blue: #dbeafe;
+  --ui-accent-pink: #fce7f3;
+  --ui-accent-green: #d1fae5;
+  --ui-accent-purple: #ede9fe;
+  /* 真·玻璃：低透明度，依赖 backdrop-blur */
+  --ui-surface: rgba(255, 255, 255, 0.12);
+  --ui-surface-hover: rgba(255, 255, 255, 0.18);
+  --ui-surface-solid: rgba(50, 40, 100, 0.82);
+}
+
+[data-theme='glow'] {
+  color: #f8fafc;
+  --ui-text-primary: #f8fafc;
+  --ui-text-secondary: #e2e8f0;
+  --ui-text-muted: #cbd5e1;
+  --ui-text-faint: #94a3b8;
+  --ui-accent-blue: #7df9ff;
+  --ui-accent-pink: #f5b8ff;
+  --ui-accent-green: #7dffc8;
+  --ui-accent-purple: #d8b4fe;
+}
+
+.ui-text-primary { color: var(--ui-text-primary); }
+.ui-text-secondary { color: var(--ui-text-secondary); }
+.ui-text-muted { color: var(--ui-text-muted); }
+.ui-text-faint { color: var(--ui-text-faint); }
+.ui-text-accent-blue { color: var(--ui-accent-blue); }
+.ui-text-accent-pink { color: var(--ui-accent-pink); }
+.ui-text-accent-green { color: var(--ui-accent-green); }
+
+/* 文字阴影：玻璃/霓虹底上保证可读 */
+[data-theme='glass'] .ui-text-primary,
+[data-theme='glass'] .ui-text-secondary,
+[data-theme='glass'] .ui-text-muted,
+[data-theme='glass'] .ui-card {
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.25);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-theme='glass'] *,
+  [data-theme='glow'] * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

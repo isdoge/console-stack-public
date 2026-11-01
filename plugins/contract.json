@@ -1,0 +1,47 @@
+{
+  "api_version": 1,
+  "defaults": {
+    "order": 100,
+    "client_mode": "authority",
+    "persistent": false,
+    "sidebar": false,
+    "immersive": false,
+    "navigation": false
+  },
+  "reserved_routes": [
+    "/devices",
+    "/settings",
+    "/beszel",
+    "/assets",
+    "/actions"
+  ],
+  "reserved_api": [
+    "/api/config",
+    "/api/plugins",
+    "/api/health",
+    "/api/services",
+    "/api/machines",
+    "/api/machine",
+    "/api/service",
+    "/api/monitor",
+    "/api/observability",
+    "/api/ops-status",
+    "/api/dashboard-layout",
+    "/api/attention",
+    "/api/inspection",
+    "/api/capacity",
+    "/api/entries",
+    "/api/tailnet",
+    "/api/node-traffic",
+    "/api/caddy",
+    "/api/trigger"
+  ],
+  "reserved_settings": [
+    "general",
+    "notify",
+    "data",
+    "plugins",
+    "security",
+    "about"
+  ]
+}

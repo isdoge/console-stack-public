@@ -1,0 +1,158 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+  /* 标签保留触摸与键盘横向滚动，只隐藏可见滚动条。 */
+  .scrollbar-hidden {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .scrollbar-hidden::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    /* D1：语义色 + signal 色带（hsl 三元组，对齐 shadcn 格式） */
+    --success: 160 84% 39%;
+    --success-foreground: 210 40% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 222.2 47.4% 11.2%;
+    --info: 200 98% 39%;
+    --info-foreground: 210 40% 98%;
+    --signal-1: 161 94% 30%;
+    --signal-2: 142 69% 58%;
+    --signal-3: 83 78% 55%;
+    --signal-4: 48 96% 53%;
+    --signal-5: 350 89% 60%;
+  }
+
+  /* 暗色主题（T12）：深空蓝底 + 同 hue 提亮语义色；signal 色带提一档保对比 */
+  .dark {
+    --background: 222.2 47% 7%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 42% 11%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 47% 9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 96%;
+    --primary-foreground: 222.2 47% 11%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 72% 56%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 20%;
+    --input: 217.2 32.6% 20%;
+    --ring: 212.7 26.8% 83.9%;
+    --success: 160 84% 45%;
+    --success-foreground: 210 40% 98%;
+    --warning: 38 92% 55%;
+    --warning-foreground: 222.2 47% 11%;
+    --info: 200 98% 55%;
+    --info-foreground: 222.2 47% 11%;
+    --signal-1: 161 80% 42%;
+    --signal-2: 142 69% 55%;
+    --signal-3: 83 70% 52%;
+    --signal-4: 48 96% 55%;
+    --signal-5: 350 89% 63%;
+  }
+}
+
+@layer base {
+  /* D3：降级底色——Background 渐变未渲染 / 样式失败时兜底，body 透明后可见 */
+  html {
+    background-color: hsl(210 40% 96.1%);
+  }
+  html.dark {
+    background-color: hsl(222.2 47% 7%);
+  }
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply text-foreground;
+    /* D3：背景渐变由 <Background /> 接管，body 保持透明透出底色 */
+    background-color: transparent;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+/* D3：玻璃表面 utility。Card 基类与 layout 的 header/侧栏共用；
+   值对照 Glassmorphism main.css:296-330 的 blur(14px) saturate(145%)。
+   必须待在 @layer components 内：裸写在 layer 之外时源序压过同特异度的 Tailwind
+   工具类，调用方的 bg-* 会被静默吃掉（E 遗留项 3，D 实测 Card 补 bg-muted 无效）。 */
+@layer components {
+  /* D3：背景 mesh。亮色青蓝/淡紫/薄荷；暗色换深空蓝紫，透明度压低避免喧宾夺主 */
+  .bg-mesh {
+    background-color: hsl(210 40% 96.1%);
+    background-image: radial-gradient(at 18% 18%, hsl(198 90% 88% / 0.9), transparent 45%),
+      radial-gradient(at 82% 12%, hsl(262 70% 92% / 0.8), transparent 42%),
+      radial-gradient(at 72% 82%, hsl(156 55% 88% / 0.8), transparent 50%),
+      radial-gradient(at 12% 88%, hsl(190 80% 90% / 0.7), transparent 48%);
+  }
+  .dark .bg-mesh {
+    background-color: hsl(222.2 47% 7%);
+    background-image: radial-gradient(at 18% 18%, hsl(222 60% 22% / 0.85), transparent 45%),
+      radial-gradient(at 82% 12%, hsl(262 45% 20% / 0.7), transparent 42%),
+      radial-gradient(at 72% 82%, hsl(200 45% 18% / 0.7), transparent 50%),
+      radial-gradient(at 12% 88%, hsl(250 40% 18% / 0.6), transparent 48%);
+  }
+
+  .glass-surface {
+    background-color: hsl(var(--card) / 0.75);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
+  }
+  /* 暗色下玻璃透光率更低一点，避免深底上卡片边界发灰 */
+  .dark .glass-surface {
+    background-color: hsl(var(--card) / 0.62);
+  }
+  /* 不带 :hover 提亮——Card 基类会把它传染给全部卡片，而本仓当前没有任何可点卡，
+     构成假可点暗示（E 遗留项 4）。可交互面自行加 `hover:bg-card/90` 之类工具类，
+     现在类进了 @layer components，工具类能正常覆盖。 */
+  .glass-panel {
+    background-color: hsl(var(--background) / 0.7);
+    -webkit-backdrop-filter: blur(14px) saturate(150%);
+    backdrop-filter: blur(14px) saturate(150%);
+  }
+
+  /* D3：Firefox 降级——关 blur 换近实底（照抄 Glassmorphism main.css:452 思路）。
+     现代 Firefox 已支持 backdrop-filter，此分支仅保证旧版 / 合成开销敏感时仍可读。 */
+  @supports (-moz-appearance: none) {
+    .glass-surface,
+    .glass-panel {
+      background-color: hsl(var(--card) / 0.92);
+      -webkit-backdrop-filter: none;
+      backdrop-filter: none;
+    }
+    .glass-panel {
+      background-color: hsl(var(--background) / 0.92);
+    }
+  }
+}

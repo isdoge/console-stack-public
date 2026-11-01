@@ -1,0 +1,60 @@
+/*
+ * C8 / D2 + D3：GridStack 壳的最小改写。
+ *
+ * 单独一个文件而不是并进 `src/index.css`：这几条只服务网格渲染路径，
+ * D4 删掉静态渲染分支或换引擎时可以整文件删掉，不用在全局样式里挑行。
+ */
+
+/* 引擎默认 `overflow-x:hidden; overflow-y:auto`，会把服务器卡 `hover:ring-2` 的
+   外发光切掉；高度由 resizeToContent 顶上去（ceil 取整只会多给不会少给），
+   所以这里放开溢出，不会串到下一张卡。 */
+.console-dashboard-grid .grid-stack-item-content {
+  overflow: visible;
+}
+
+/* 卡片自己带圆角与玻璃底，壳不再加背景/边框 */
+.console-dashboard-grid .grid-stack-item-content {
+  background: transparent;
+}
+
+/* 查看态（staticGrid）不该有拖拽光标暗示；编辑态由屏蔽层自己带 `cursor: move` */
+.console-dashboard-grid:not(.is-editing) .grid-stack-item-content {
+  cursor: default;
+}
+
+/* 引擎默认给格子加了 `transition: left/right/top/height .3s`。查看态没有动画需求，
+   留着还会让 resizeToContent 的第二遍（见 dashboard-grid.tsx 的 rAF 复算）读到过渡中间值，
+   把本来确定的收敛变成看运气。关掉。 */
+.console-dashboard-grid .grid-stack-item {
+  transition: none;
+}
+
+/* ---- D3 编辑态 ---- */
+
+/* 编辑态给每张卡一圈虚线，让「现在可以拖」这件事不必靠猜。
+   画在屏蔽层上而不是卡片上：卡片自带圆角与阴影，加边框会跟它打架。 */
+.console-dashboard-grid.is-editing [data-widget-shield] {
+  border: 1px dashed hsl(var(--primary) / 0.45);
+  background: hsl(var(--primary) / 0.04);
+}
+
+.console-dashboard-grid.is-editing [data-widget-shield]:hover {
+  background: hsl(var(--primary) / 0.09);
+}
+
+/* 拖拽落点占位块。引擎默认给的是半透明黑块，暗色主题下几乎看不见。 */
+.console-dashboard-grid.is-editing .grid-stack-placeholder > .placeholder-content {
+  border: 1px dashed hsl(var(--primary) / 0.6);
+  border-radius: 0.5rem;
+  background-color: hsl(var(--primary) / 0.08);
+}
+
+/* 右下角 resize 手柄。引擎自己给的是 z-index:100/101（在 `.grid-stack-item` 上，
+   与 `.grid-stack-item-content` 同级），屏蔽层 z-10 / ⋮ 菜单 z-20 都在内容盒里，
+   压不到它——Homarr 踩过的「手柄被卡头盖住」（issue #1999）在这套层级下不成立。
+   这里只把它画出来：默认样式在深色玻璃底上偏淡。 */
+.console-dashboard-grid.is-editing .grid-stack-item > .ui-resizable-se {
+  border-right: 2px solid hsl(var(--primary) / 0.7);
+  border-bottom: 2px solid hsl(var(--primary) / 0.7);
+  border-bottom-right-radius: 0.25rem;
+}

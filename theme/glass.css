@@ -1,0 +1,284 @@
+/* 玻璃态主题 — 参考 visual-glassmorphism */
+
+[data-theme='glass'] .ui-shell {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 35%, #f093fb 65%, #4facfe 100%);
+  background-size: 400% 400%;
+  animation: glass-gradient-shift 18s ease infinite;
+}
+
+[data-theme='glass'] .ui-shell::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.18) 0%, transparent 45%),
+    radial-gradient(circle at 80% 70%, rgba(255, 255, 255, 0.12) 0%, transparent 40%);
+  animation: glass-shimmer 12s ease-in-out infinite alternate;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@keyframes glass-gradient-shift {
+  0%, 100% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+}
+
+@keyframes glass-shimmer {
+  0% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.05); }
+}
+
+[data-theme='glass'] .ui-blur-light {
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+
+[data-theme='glass'] .ui-blur-medium {
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+
+[data-theme='glass'] .ui-blur-strong {
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+}
+
+[data-theme='glass'] .ui-nav {
+  background: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(40px);
+  -webkit-backdrop-filter: blur(40px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 4px 24px rgba(31, 38, 135, 0.25);
+}
+
+[data-theme='glass'] .ui-tabs-bar {
+  background: rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+[data-theme='glass'] .ui-logo-box {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 4px 20px rgba(31, 38, 135, 0.25);
+  animation: glass-logo-pulse 4s ease-in-out infinite;
+}
+
+@keyframes glass-logo-pulse {
+  0%, 100% { box-shadow: 0 4px 20px rgba(31, 38, 135, 0.25); }
+  50% { box-shadow: 0 4px 28px rgba(255, 255, 255, 0.2); }
+}
+
+[data-theme='glass'] .ui-title {
+  background: linear-gradient(90deg, #fff, rgba(255, 255, 255, 0.85));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+[data-theme='glass'] .ui-card {
+  position: relative;
+  background: var(--ui-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow:
+    0 8px 32px rgba(31, 38, 135, 0.35),
+    inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  transition: transform 0.35s ease, box-shadow 0.35s ease, background 0.35s ease, border-color 0.35s ease;
+  color: var(--ui-text-primary);
+  animation: glass-card-enter 0.7s ease backwards;
+}
+
+[data-theme='glass'] .ui-card:nth-child(1) { animation-delay: 0.05s; }
+[data-theme='glass'] .ui-card:nth-child(2) { animation-delay: 0.1s; }
+[data-theme='glass'] .ui-card:nth-child(3) { animation-delay: 0.15s; }
+[data-theme='glass'] .ui-card:nth-child(4) { animation-delay: 0.2s; }
+
+@keyframes glass-card-enter {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  [data-theme='glass'] .ui-card,
+  [data-theme='glass'] .ui-iframe-wrap {
+    background: var(--ui-surface-solid);
+  }
+}
+
+[data-theme='glass'] .ui-card::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.12), transparent);
+  transform: skewX(-20deg);
+  animation: glass-shine 6s ease-in-out infinite;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+@keyframes glass-shine {
+  0%, 100% { left: -100%; opacity: 0; }
+  50% { left: 120%; opacity: 1; }
+}
+
+[data-theme='glass'] .ui-card:hover {
+  background: var(--ui-surface-hover);
+  border-color: rgba(255, 255, 255, 0.35);
+  box-shadow:
+    0 16px 48px rgba(31, 38, 135, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  transform: translateY(-4px);
+}
+
+[data-theme='glass'] .ui-btn {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 0.75rem;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(31, 38, 135, 0.25);
+  transition: all 0.3s ease;
+  cursor: pointer;
+}
+
+[data-theme='glass'] .ui-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.22);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 28px rgba(255, 255, 255, 0.25);
+}
+
+[data-theme='glass'] .ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme='glass'] .ui-btn-primary {
+  border-color: rgba(147, 197, 253, 0.5);
+  background: rgba(96, 165, 250, 0.28);
+  box-shadow: 0 4px 20px rgba(96, 165, 250, 0.3);
+}
+
+[data-theme='glass'] .ui-btn-primary:hover:not(:disabled) {
+  background: rgba(96, 165, 250, 0.4);
+  box-shadow: 0 8px 32px rgba(96, 165, 250, 0.45);
+}
+
+[data-theme='glass'] .ui-btn-danger {
+  border-color: rgba(252, 165, 165, 0.4);
+  background: rgba(239, 68, 68, 0.2);
+}
+
+[data-theme='glass'] .ui-btn-success {
+  border-color: rgba(110, 231, 183, 0.4);
+  background: rgba(16, 185, 129, 0.2);
+}
+
+[data-theme='glass'] .ui-btn-warning {
+  border-color: rgba(252, 211, 77, 0.4);
+  background: rgba(245, 158, 11, 0.2);
+}
+
+[data-theme='glass'] .ui-btn-info {
+  border-color: rgba(125, 211, 252, 0.4);
+  background: rgba(14, 165, 233, 0.2);
+}
+
+[data-theme='glass'] .ui-iframe-wrap {
+  background: var(--ui-surface);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 1.25rem;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.35);
+  overflow: hidden;
+}
+
+[data-theme='glass'] .ui-theme-switch {
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 0.75rem;
+  color: #fff;
+  transition: all 0.3s ease;
+}
+
+[data-theme='glass'] .ui-theme-switch:hover {
+  background: rgba(255, 255, 255, 0.22);
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+[data-theme='glass'] .ui-particle {
+  position: absolute;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.25), rgba(255, 255, 255, 0.05));
+  will-change: transform;
+  animation: glass-float-particle 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes glass-float-particle {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(40px, -50px) scale(1.12); }
+  50% { transform: translate(-30px, -90px) scale(0.88); }
+  75% { transform: translate(-50px, -45px) scale(1.06); }
+}
+
+/* 玻璃态 MUI：半透明 Paper，让渐变透出来 */
+[data-theme='glass'] .MuiPaper-root {
+  background: rgba(255, 255, 255, 0.1) !important;
+  backdrop-filter: blur(20px) !important;
+  -webkit-backdrop-filter: blur(20px) !important;
+  background-image: none !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 8px 32px rgba(31, 38, 135, 0.35) !important;
+  color: #fff !important;
+}
+
+[data-theme='glass'] .MuiTableCell-root {
+  color: rgba(255, 255, 255, 0.92) !important;
+  border-color: rgba(255, 255, 255, 0.12) !important;
+}
+
+[data-theme='glass'] .MuiTableCell-head {
+  color: #fff !important;
+  background: rgba(255, 255, 255, 0.08) !important;
+  font-weight: 700 !important;
+}
+
+[data-theme='glass'] .MuiTableRow-root:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+}
+
+[data-theme='glass'] .MuiTabs-indicator {
+  box-shadow: 0 0 12px rgba(96, 165, 250, 0.6);
+}
+
+[data-theme='glass'] .MuiChip-colorSuccess {
+  background: rgba(52, 211, 153, 0.25) !important;
+  color: #ecfdf5 !important;
+  border: 1px solid rgba(110, 231, 183, 0.45) !important;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.25);
+}
+
+@media (max-width: 768px) {
+  [data-theme='glass'] .ui-blur-strong,
+  [data-theme='glass'] .ui-nav {
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+}

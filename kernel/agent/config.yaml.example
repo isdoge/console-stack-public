@@ -1,0 +1,8 @@
+{
+  "server_url": "http://100.64.0.10:8081",
+  "machine_id": "REPLACE_WITH_LEDGER_MACHINE_ID",
+  "state_dir": "/var/lib/console-agent",
+  "docker_socket": "/var/run/docker.sock",
+  "sample_interval_sec": 300,
+  "buffer_max_bytes": 104857600
+}

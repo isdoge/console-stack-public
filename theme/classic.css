@@ -1,0 +1,122 @@
+/* 经典暗色主题 — 原 GitHub 风格运维台 */
+
+[data-theme='classic'] .ui-shell {
+  background: #0d1117;
+  color: #c9d1d9;
+}
+
+[data-theme='classic'] .ui-nav {
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+  box-shadow: none;
+}
+
+[data-theme='classic'] .ui-tabs-bar {
+  background: #161b22;
+  border-bottom: 1px solid #30363d;
+}
+
+[data-theme='classic'] .ui-logo-box {
+  background: #21262d;
+  border: 1px solid #30363d;
+  box-shadow: none;
+}
+
+[data-theme='classic'] .ui-title {
+  color: #f0f6fc;
+  text-shadow: none;
+}
+
+[data-theme='classic'] .ui-card {
+  background: #161b22;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  box-shadow: none;
+  color: #c9d1d9;
+  transition: border-color 0.2s ease;
+}
+
+[data-theme='classic'] .ui-card:hover {
+  border-color: #484f58;
+  transform: none;
+}
+
+[data-theme='classic'] .ui-btn {
+  background: #21262d;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #c9d1d9;
+  box-shadow: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+[data-theme='classic'] .ui-btn:hover:not(:disabled) {
+  background: #30363d;
+  border-color: #8b949e;
+  transform: none;
+  color: #f0f6fc;
+}
+
+[data-theme='classic'] .ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme='classic'] .ui-btn-primary {
+  background: #238636;
+  border-color: rgba(240, 246, 252, 0.1);
+  color: #ffffff;
+}
+
+[data-theme='classic'] .ui-btn-primary:hover:not(:disabled) {
+  background: #2ea043;
+}
+
+[data-theme='classic'] .ui-btn-danger {
+  background: #21262d;
+  border-color: #f85149;
+  color: #f85149;
+}
+
+[data-theme='classic'] .ui-btn-danger:hover:not(:disabled) {
+  background: rgba(248, 81, 73, 0.15);
+}
+
+[data-theme='classic'] .ui-btn-success {
+  border-color: #238636;
+  color: #3fb950;
+}
+
+[data-theme='classic'] .ui-btn-warning {
+  border-color: #d29922;
+  color: #d29922;
+}
+
+[data-theme='classic'] .ui-btn-info {
+  border-color: #58a6ff;
+  color: #58a6ff;
+}
+
+[data-theme='classic'] .ui-iframe-wrap {
+  background: #161b22;
+  border-radius: 6px;
+  border: 1px solid #30363d;
+  overflow: hidden;
+}
+
+[data-theme='classic'] .ui-theme-switch {
+  background: #21262d;
+  border: 1px solid #30363d;
+  border-radius: 6px;
+  color: #c9d1d9;
+  box-shadow: none;
+}
+
+[data-theme='classic'] .ui-theme-switch:hover {
+  background: #30363d;
+  color: #f0f6fc;
+}

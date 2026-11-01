@@ -1,0 +1,124 @@
+/* 日间浅色主题 — 简洁明亮 · 现代运维台 */
+
+[data-theme='light'] .ui-shell {
+  background: #f6f8fa;
+  color: #1f2328;
+}
+
+[data-theme='light'] .ui-nav {
+  background: #ffffff;
+  border-bottom: 1px solid #d0d7de;
+  box-shadow: 0 1px 3px rgba(31, 35, 40, 0.06);
+}
+
+[data-theme='light'] .ui-tabs-bar {
+  background: #ffffff;
+  border-bottom: 1px solid #d0d7de;
+}
+
+[data-theme='light'] .ui-logo-box {
+  background: #ffffff;
+  border: 1px solid #d0d7de;
+  box-shadow: 0 1px 2px rgba(31, 35, 40, 0.04);
+}
+
+[data-theme='light'] .ui-title {
+  color: #1f2328;
+  text-shadow: none;
+}
+
+[data-theme='light'] .ui-card {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #d0d7de;
+  box-shadow: 0 1px 3px rgba(31, 35, 40, 0.04);
+  color: #1f2328;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+[data-theme='light'] .ui-card:hover {
+  border-color: #afb8c1;
+  box-shadow: 0 4px 12px rgba(31, 35, 40, 0.08);
+  transform: none;
+}
+
+[data-theme='light'] .ui-btn {
+  background: #f6f8fa;
+  border-radius: 6px;
+  border: 1px solid #d0d7de;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #24292f;
+  box-shadow: 0 1px 0 rgba(31, 35, 40, 0.04);
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+  cursor: pointer;
+}
+
+[data-theme='light'] .ui-btn:hover:not(:disabled) {
+  background: #eaeef2;
+  border-color: #afb8c1;
+  transform: none;
+  color: #1f2328;
+}
+
+[data-theme='light'] .ui-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-theme='light'] .ui-btn-primary {
+  background: #1f883d;
+  border-color: rgba(31, 35, 40, 0.15);
+  color: #ffffff;
+  box-shadow: 0 1px 0 rgba(31, 35, 40, 0.1);
+}
+
+[data-theme='light'] .ui-btn-primary:hover:not(:disabled) {
+  background: #1a7f37;
+}
+
+[data-theme='light'] .ui-btn-danger {
+  background: #f6f8fa;
+  border-color: #cf222e;
+  color: #cf222e;
+}
+
+[data-theme='light'] .ui-btn-danger:hover:not(:disabled) {
+  background: #ffebe9;
+}
+
+[data-theme='light'] .ui-btn-success {
+  border-color: #1f883d;
+  color: #1f883d;
+}
+
+[data-theme='light'] .ui-btn-warning {
+  border-color: #bf8700;
+  color: #bf8700;
+}
+
+[data-theme='light'] .ui-btn-info {
+  border-color: #0969da;
+  color: #0969da;
+}
+
+[data-theme='light'] .ui-iframe-wrap {
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #d0d7de;
+  overflow: hidden;
+}
+
+[data-theme='light'] .ui-theme-switch {
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  color: #656d76;
+  box-shadow: none;
+}
+
+[data-theme='light'] .ui-theme-switch:hover {
+  background: #eaeef2;
+  color: #1f2328;
+}

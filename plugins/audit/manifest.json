@@ -1,0 +1,24 @@
+{
+  "id": "audit",
+  "name": "审计与事件",
+  "description": "操作记录与监控事件查询；基础操作留痕持续保留。",
+  "version": "1.2.0",
+  "api_version": 1,
+  "order": 40,
+  "routes": [
+    "/audit"
+  ],
+  "api_prefixes": [
+    "/api/oplog",
+    "/api/events"
+  ],
+  "client_mode": "shared",
+  "icon": "clipboard-list",
+  "owns": {
+    "tables": [],
+    "settings": [],
+    "files": [],
+    "tasks": []
+  },
+  "navigation": true
+}

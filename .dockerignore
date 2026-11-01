@@ -1,0 +1,74 @@
+# Git / IDE / 本地工具
+.git
+.github
+.cursor
+.qoder
+.trellis
+.agents
+.claude
+.codex
+.zcode
+.trash
+.idea
+.vscode
+*.swp
+.DS_Store
+Thumbs.db
+
+# 环境与密钥（绝不能进镜像层）
+.env
+.env.*
+.ssh-console
+.ssh-runtime
+**/*id_ed25519*
+**/*id_rsa*
+
+# 运行时数据与备份
+backup
+beszel/data
+**/*.db
+**/*.db-shm
+**/*.db-wal
+console/backend/data
+
+# 依赖与构建产物（镜像内自行安装/构建）
+**/node_modules
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/dist
+console/backend/static
+.pytest_cache
+.ruff_cache
+.coverage
+htmlcov
+*.egg-info
+
+# 文档与辅助（运行时不需要）
+docs
+olivetin
+*.md
+!console/backend/requirements.txt
+
+# 测试与迁移脚本（镜像内不跑）
+**/test_*.py
+**/tests
+console/scripts
+**/*.test.*
+**/*.spec.*
+**/tsconfig.*.local.json
+
+# PG-04（提案 §6.1）：PG 数据盘、dump 与凭据绝不进构建上下文
+pg-data
+console/backend/pg-data
+**/*.dump
+**/*.dump.tmp-*
+pg-admin.password
+secrets
+
+# Host-generated collectors; never source or image content
+runtime/
+
+# S5 vendored runtime bundles are source artifacts, not frontend output.
+!tools/personal-workbench/tools/S5/dist/
+!tools/personal-workbench/tools/S5/dist/**

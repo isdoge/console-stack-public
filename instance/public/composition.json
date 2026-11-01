@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "name": "console-stack public image",
+  "profile": "public",
+  "roots": {
+    "config": "./config",
+    "data": "./data",
+    "static": "./static",
+    "backup": "./backup",
+    "plugins": "../../plugins"
+  },
+  "host": {},
+  "alert_machines": {}
+}
