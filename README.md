@@ -35,7 +35,10 @@ Compose defaults bind the web UI to loopback. Point Postgres and roles via `.env
 
 ## License / provenance
 
-License target remains MIT; dependency and third-party NOTICE packaging continue to be tracked in the private B7 evidence trail. Treat this first public cut as a clean source + image candidate, not a claim that every transitive NOTICE is finalized.
+- Project license: [LICENSE](./LICENSE) (MIT)
+- Third-party notices: [NOTICE](./NOTICE) (npm production deps, public Python runtime, gopsutil, referenced UI upstreams)
+- Public `requirements.txt` excludes private plugin parsers (feedparser/openpyxl/pdfplumber)
+- Remaining gaps (full lockfile closure inlining, favicon provenance, native wheel internals) are listed at the end of NOTICE
 
 ## Source identity
 
