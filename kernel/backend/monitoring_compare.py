@@ -784,7 +784,13 @@ def run_comparison(machine_ids=None, snapshot=None, window_sec=AGENT_WINDOW_SEC,
     machine_ids = [str(m).strip().lower() for m in machine_ids]
 
     if snapshot is None:
-        import beszel_client
+        try:
+            import beszel_client
+        except ImportError as exc:  # public tree has no private Beszel bridge
+            raise RuntimeError(
+                "live Beszel snapshot fetch requires the private beszel_client "
+                "bridge; inject snapshot=... for public/kernel-only runs"
+            ) from exc
 
         started = time.monotonic()
         snapshot = beszel_client.get_monitor_snapshot()

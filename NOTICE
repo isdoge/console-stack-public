@@ -1043,3 +1043,8 @@ E. Notes / remaining gaps
   license progress; replace or document before asserting full resource audit.
 - Root `theme/` is included for historical packaging completeness; current
   frontend consumers were documented as absent at extraction time.
+
+- Optional private bridges (`beszel_client`, `backup_pay`) are not shipped.
+  Call sites either lazy-import or fail closed with a clear RuntimeError when
+  those bridges are absent; public runs should inject snapshots / skip Pay.
+
