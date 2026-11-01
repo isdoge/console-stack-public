@@ -18,6 +18,12 @@
 #   5. 受限账号密码错误    → 退出码 2（连不上就停，不降级 SQLite）
 #   6. client 未声明 CONSOLE_AUTHORITY_ORIGIN → 退出码 4
 #   7. 镜像 Python = 3.10  （与生产 python:3.10-slim-bookworm 对齐，不以本机解释器代替）
+#   8. 组件模式（生产 runbook 阶段 4）：镜像内前后端组合身份一致；未接管库在组件模式
+#      退出码 3；adopt + 运行账号读登记表后，同一配置以 /app/private-composition.json
+#      启动且 /api/health 200
+#   9. 许可随附覆盖实际安装物：镜像内跑 gen_third_party_licenses.py --verify-image，
+#      /app 与 /app/static 两份 THIRD_PARTY_LICENSES 一致、GAPS=0、每个 dpkg 包 /
+#      psycopg 内嵌原生库 / node / python / docker CLI 与插件都在 COVERAGE 内
 #
 # 本地与 CI 同一条命令：
 #   docker build -f console/Dockerfile --target with-personal -t console-brain:ci .
@@ -410,6 +416,66 @@ grep -q "client 未配置 CONSOLE_AUTHORITY_ORIGIN" "$LOG" && ok "拒绝理由�
 
 run_app_expect_exit "受限账号密码错误" 2 "${wrong_pw_env[@]}" "${yaml_mounts[@]}"
 grep -qi "sqlite" "$LOG" && ok "拒绝时明确不走 SQLite 降级" || bad "日志未声明不降级 SQLite"
+
+echo
+echo "=== 组件模式（生产 runbook 阶段 4：构建身份 + 镜像内私人组合）"
+if docker run --rm --entrypoint python "$IMAGE" -c '
+import json, os, sys
+sys.path.insert(0, "/app")
+import composition_identity as ci
+runtime = ci.current()
+assert os.environ["CONSOLE_BUILD_IDENTITY_FILE"] == "/app/build-identity.json"
+assert runtime is not None and ci.verify_static("/app/static") == runtime
+print(runtime["composition_digest"][:12], len(runtime["plugins"]))
+' >"${TMP_DIR}/identity.txt" 2>&1; then
+  ok "镜像内前后端组合身份一致（digest/插件数 $(cat "${TMP_DIR}/identity.txt")）"
+else
+  bad "镜像内组合身份缺失或前后端不一致"; cat "${TMP_DIR}/identity.txt"
+fi
+component_env=( -e CONSOLE_COMPOSITION_FILE=/app/private-composition.json )
+run_app_expect_exit "组件模式 + 未接管库" 3 "${app_env[@]}" "${component_env[@]}" "${yaml_mounts[@]}"
+grep -q "组件登记核验失败" "$LOG" && ok "拒绝理由指向组件登记" || bad "日志未说明组件登记缺失"
+component_cli() {  # 与 runbook 阶段 2 同一条 owner CLI；仓库只读挂入
+  docker run --rm --network "$NET" "${admin_env[@]}" -e CONSOLE_STORAGE_ENGINE=postgres \
+    -v "${ROOT}:/workspace:ro" -w /workspace "$IMAGE" \
+    python scripts/pg_component_schema.py "$@" --plugins-root /workspace/plugins
+}
+if component_cli adopt >"${TMP_DIR}/adopt.json" 2>&1 && component_cli check >"${TMP_DIR}/ccheck.json" 2>&1; then
+  ok "adopt → check 通过"
+else
+  bad "adopt/check 失败"; cat "${TMP_DIR}/adopt.json" "${TMP_DIR}/ccheck.json"
+fi
+docker exec -e PGPASSWORD="$ADMIN_PW" "$PG_NAME" psql -v ON_ERROR_STOP=1 -U "$ADMIN_USER" -d "$DB" -q \
+  -c "GRANT SELECT ON component_schema_migrations TO ${APP_ROLE}" >/dev/null
+docker run -d --name "$APP_NAME" --network "$NET" "${app_env[@]}" "${component_env[@]}" \
+  "${yaml_mounts[@]}" "$IMAGE" >/dev/null
+ready=0
+for _ in $(seq 1 30); do
+  if app_curl -fsS -o /dev/null http://127.0.0.1:8080/api/health >/dev/null 2>&1; then ready=1; break; fi
+  [ "$(docker inspect -f '{{.State.Running}}' "$APP_NAME" 2>/dev/null)" = "true" ] || break
+  sleep 2
+done
+# 闸门的「兼容」只记 INFO（app 未配置 INFO 输出），不以日志为判据：同一组环境变量
+# 在接管前退出 3、接管+授权后 health 200，差分即证明组件闸门生效且放行。
+mode="$(docker exec "$APP_NAME" python -c 'import sys; sys.path.insert(0, "/app"); import composition; print(composition.composition_file())' 2>/dev/null || true)"
+if [ "$ready" = 1 ] && [ "$mode" = "/app/private-composition.json" ]; then
+  ok "组件模式启动：组合文件 ${mode}，/api/health 200（接管前同配置退出 3）"
+else
+  bad "组件模式未就绪（ready=${ready} mode=${mode}）"
+  docker ps -a --filter "name=${APP_NAME}" --format "{{.Status}}"; docker logs "$APP_NAME" 2>&1 | tail -40
+fi
+docker rm -f "$APP_NAME" >/dev/null
+
+echo
+echo "=== 许可随附覆盖镜像实际安装物（B7 t41u 许可缺口）"
+if docker run --rm -i --entrypoint python "$IMAGE" - --verify-image /app/THIRD_PARTY_LICENSES.txt \
+     --static-copy /app/static/THIRD_PARTY_LICENSES.txt \
+     < "${ROOT}/scripts/gen_third_party_licenses.py" > "${TMP_DIR}/licenses.json"; then
+  ok "THIRD_PARTY_LICENSES 覆盖镜像安装物 —— $(python3 -c 'import json,sys; d=json.load(open(sys.argv[1])); print("covers=", d["covers"], "dpkg=", d["debian_packages"], "libs=", d["psycopg_libs"], "warnings=", len(d["warnings"]))' "${TMP_DIR}/licenses.json")"
+else
+  bad "THIRD_PARTY_LICENSES 未覆盖镜像安装物"
+  cat "${TMP_DIR}/licenses.json" || true
+fi
 
 echo
 echo "=== 汇总"

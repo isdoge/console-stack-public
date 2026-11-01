@@ -1,0 +1,410 @@
+{
+ "_doc": "上游原始来源的许可原文清单（B7 t41u 许可缺口关闭）。每条 text 固定 URL + sha256；生成器下载后校验 sha256 再内联，并在输出里注明来源 URL。sha256 由 `gen_third_party_licenses.py --pin-upstream` 首次写入，之后任何上游变化都会校验失败（fail closed）。",
+ "entries": [
+  {
+   "label": "npm agent-base@6.0.2",
+   "section": "npm",
+   "license": "MIT",
+   "note": "npm 包内无许可文件；许可原文在上游仓库同版本 tag 的 README「License」节。",
+   "texts": [
+    {
+     "name": "README.md § License (TooTallNate/node-agent-base@6.0.2)",
+     "url": "https://raw.githubusercontent.com/TooTallNate/node-agent-base/6.0.2/README.md",
+     "extract": {
+      "start": "^License\\n-+\\n",
+      "end": "^\\["
+     },
+     "sha256": "f1425c3b72330fe4fb2aa5a2fb152e939bdf534692a32b5f0b38f74147b98556"
+    }
+   ]
+  },
+  {
+   "label": "npm https-proxy-agent@5.0.1",
+   "section": "npm",
+   "license": "MIT",
+   "note": "npm 包内无许可文件；许可原文在上游仓库同版本 tag 的 README「License」节。",
+   "texts": [
+    {
+     "name": "README.md § License (TooTallNate/node-https-proxy-agent@5.0.1)",
+     "url": "https://raw.githubusercontent.com/TooTallNate/node-https-proxy-agent/5.0.1/README.md",
+     "extract": {
+      "start": "^License\\n-+\\n",
+      "end": "^\\["
+     },
+     "sha256": "32f0856d2c43df7d05cca960fdee84e1e38ab545bd7b2186433dfa41aa90a712"
+    }
+   ]
+  },
+  {
+   "label": "npm dlv@1.1.3",
+   "section": "npm",
+   "license": "MIT",
+   "note": "上游仓库在 1.1.3 tag 无 LICENSE 文件；上游声明为 package.json `license: MIT`（作者 Jason Miller）与 README「License: MIT」。README 链接的 oss.ninja 域名已失效，MIT 原文取 SPDX License List 官方数据（spdx/license-list-data v3.29.0），版权人按上游 package.json author。",
+   "texts": [
+    {
+     "name": "package.json (developit/dlv@1.1.3)",
+     "url": "https://raw.githubusercontent.com/developit/dlv/1.1.3/package.json",
+     "extract": {
+      "lines_matching": "\"(name|version|author|license)\""
+     },
+     "sha256": "d0355a98f75d3547e341ff1cbade270c5d5e9b109dd2b03163178c58b8d525d2"
+    },
+    {
+     "name": "README.md § License (developit/dlv@1.1.3)",
+     "url": "https://raw.githubusercontent.com/developit/dlv/1.1.3/README.md",
+     "extract": {
+      "start": "^### License\\n",
+      "end": "^\\[preact\\]"
+     },
+     "sha256": "9c859d9401ff1e3c62d84595ae8fb368787a6e89cd819b811be06abb2cde26db"
+    },
+    {
+     "name": "MIT.txt (spdx/license-list-data v3.29.0)",
+     "url": "https://raw.githubusercontent.com/spdx/license-list-data/v3.29.0/text/MIT.txt",
+     "sha256": "b05785f9f18e6716bab63424b11454513b9943a222595b70411009202fc592b5"
+    }
+   ]
+  },
+  {
+   "label": "npm react-remove-scroll-bar@2.3.8",
+   "section": "npm",
+   "license": "MIT",
+   "note": "2.3.8 发布物内无许可文件；上游作者随后在仓库补加 LICENSE（commit 7301c160，2025-05-21 \"chore: add LICENSE file\"），此处按该提交固定。",
+   "texts": [
+    {
+     "name": "LICENSE (theKashey/react-remove-scroll-bar@7301c160)",
+     "url": "https://raw.githubusercontent.com/theKashey/react-remove-scroll-bar/7301c160fda44cb8cf2b9fdfde61efad35736196/LICENSE",
+     "sha256": "a79aae0c0f21990d9d963bb3c5a79cdcea9a46f8523ba55c58d7fe776b6ebc84"
+    }
+   ]
+  },
+  {
+   "label": "python flask-cors==6.0.5",
+   "section": "python",
+   "license": "MIT",
+   "note": "安装后的 dist 无许可文件；取上游仓库同版本 tag 的 LICENSE。",
+   "texts": [
+    {
+     "name": "LICENSE (corydolphin/flask-cors@6.0.5)",
+     "url": "https://raw.githubusercontent.com/corydolphin/flask-cors/6.0.5/LICENSE",
+     "sha256": "134a20d852c0cf9e0f3c228767921b76f4bfc4af4a2fc7c4cc90f6b4fd407b5c"
+    }
+   ]
+  },
+  {
+   "label": "go standard library (go1.27.3)",
+   "section": "go",
+   "license": "BSD-3-Clause",
+   "note": "kernel/agent 的 Go 工具链与标准库/运行时；取上游 golang/go 同版本 tag。",
+   "texts": [
+    {
+     "name": "LICENSE (golang/go@go1.27.3)",
+     "url": "https://raw.githubusercontent.com/golang/go/go1.27.3/LICENSE",
+     "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+     "name": "PATENTS (golang/go@go1.27.3)",
+     "url": "https://raw.githubusercontent.com/golang/go/go1.27.3/PATENTS",
+     "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    }
+   ]
+  },
+  {
+   "label": "go standard library (go1.26.10) — linked into docker, docker-buildx, docker-compose",
+   "section": "image",
+   "license": "BSD-3-Clause",
+   "covers": [
+    "go-stdlib go1.26.10"
+   ],
+   "texts": [
+    {
+     "name": "LICENSE (golang/go@go1.26.10)",
+     "url": "https://raw.githubusercontent.com/golang/go/go1.26.10/LICENSE",
+     "sha256": "911f8f5782931320f5b8d1160a76365b83aea6447ee6c04fa6d5591467db9dad"
+    },
+    {
+     "name": "PATENTS (golang/go@go1.26.10)",
+     "url": "https://raw.githubusercontent.com/golang/go/go1.26.10/PATENTS",
+     "sha256": "96f408bfae65bf137fc2525d3ecb030271c50c1e90799f87abf8846d8dd505cc"
+    }
+   ]
+  },
+  {
+   "label": "Node.js v24.22.2 (/usr/local/bin/node, from node:24-bookworm-slim)",
+   "section": "image",
+   "license": "MIT AND bundled third-party (see text)",
+   "covers": [
+    "node v24.22.2"
+   ],
+   "note": "Node.js 上游 LICENSE 本身内联了二进制所含全部第三方组件（V8、OpenSSL、ICU、libuv、llhttp 等）的许可。",
+   "texts": [
+    {
+     "name": "LICENSE (nodejs/node@v24.22.2)",
+     "url": "https://raw.githubusercontent.com/nodejs/node/v24.22.2/LICENSE",
+     "sha256": "5888dbb9a1d2b18f2c3e6c5f6af1b39de658372b402a0577b002777f14c62ace"
+    }
+   ]
+  },
+  {
+   "label": "CPython 3.10.22 (python:3.10-slim-bookworm runtime)",
+   "section": "image",
+   "license": "PSF-2.0 AND bundled (see text)",
+   "covers": [
+    "python 3.10.22"
+   ],
+   "texts": [
+    {
+     "name": "LICENSE (python/cpython@v3.10.22)",
+     "url": "https://raw.githubusercontent.com/python/cpython/v3.10.22/LICENSE",
+     "sha256": "3b2f81fe21d181c499c59a256c8e1968455d6689d269aa85373bfb6af41da3bf"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: libpq (PostgreSQL 18.6)",
+   "section": "image",
+   "license": "PostgreSQL",
+   "covers": [
+    "psycopg-lib libpq"
+   ],
+   "note": "版本来自 psycopg 3.3.6 构建脚本 tools/ci/build_libpq.sh（LIBPQ_VERSION=18.6）与运行时 libpq 180006。",
+   "texts": [
+    {
+     "name": "COPYRIGHT (postgres/postgres@REL_18_6)",
+     "url": "https://raw.githubusercontent.com/postgres/postgres/REL_18_6/COPYRIGHT",
+     "sha256": "3d6af92ff8a4c2cdf69afb1cf44edea727922f5cd0cf8b5f72b11cdecac8fdfd"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: OpenSSL 3.5.8 (libssl, libcrypto)",
+   "section": "image",
+   "license": "Apache-2.0",
+   "covers": [
+    "psycopg-lib libssl",
+    "psycopg-lib libcrypto"
+   ],
+   "texts": [
+    {
+     "name": "LICENSE.txt (openssl/openssl@openssl-3.5.8)",
+     "url": "https://raw.githubusercontent.com/openssl/openssl/openssl-3.5.8/LICENSE.txt",
+     "sha256": "7d5450cb2d142651b8afa315b5f238efc805dad827d91ba367d8516bc9d49e7a"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: OpenLDAP 2.6.14 (libldap, liblber)",
+   "section": "image",
+   "license": "OLDAP-2.8",
+   "covers": [
+    "psycopg-lib libldap",
+    "psycopg-lib liblber"
+   ],
+   "texts": [
+    {
+     "name": "LICENSE (openldap/openldap@OPENLDAP_REL_ENG_2_6_14)",
+     "url": "https://raw.githubusercontent.com/openldap/openldap/OPENLDAP_REL_ENG_2_6_14/LICENSE",
+     "sha256": "310fe25c858a9515fc8c8d7d1f24a67c9496f84a91e0a0e41ea9975b1371e569"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: MIT Kerberos krb5 1.15.1 (libgssapi_krb5, libkrb5, libk5crypto, libkrb5support)",
+   "section": "image",
+   "license": "MIT-style (see text)",
+   "covers": [
+    "psycopg-lib libgssapi_krb5",
+    "psycopg-lib libkrb5",
+    "psycopg-lib libk5crypto",
+    "psycopg-lib libkrb5support"
+   ],
+   "note": "库内 KRB5_BRAND 字符串为 krb5-1.15.1-final；wheel 内 auditwheel SBOM 记为 CentOS 7 krb5-libs 1.15.1-55.el7_9。",
+   "texts": [
+    {
+     "name": "NOTICE (krb5/krb5@krb5-1.15.1-final)",
+     "url": "https://raw.githubusercontent.com/krb5/krb5/krb5-1.15.1-final/NOTICE",
+     "sha256": "f83512c49bc8cbc44ca6b8783e989a03b4051508b30563b3f9d7956eefae9151"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: Cyrus SASL 2.1.26 (libsasl2)",
+   "section": "image",
+   "license": "BSD-Attribution (see text)",
+   "covers": [
+    "psycopg-lib libsasl2"
+   ],
+   "texts": [
+    {
+     "name": "COPYING (cyrusimap/cyrus-sasl@cyrus-sasl-2.1.26)",
+     "url": "https://raw.githubusercontent.com/cyrusimap/cyrus-sasl/cyrus-sasl-2.1.26/COPYING",
+     "sha256": "9d6e5d1632140a6c135b251260953650d17d87cd1124f87aaf72192aa4580d4b"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: PCRE 8.32 (libpcre)",
+   "section": "image",
+   "license": "BSD-3-Clause",
+   "covers": [
+    "psycopg-lib libpcre"
+   ],
+   "texts": [
+    {
+     "name": "pcre-8.32/LICENCE (official pcre-8.32.tar.bz2, SourceForge release)",
+     "url": "https://sourceforge.net/projects/pcre/files/pcre/8.32/pcre-8.32.tar.bz2/download",
+     "extract": {
+      "tar_member": "pcre-8.32/LICENCE"
+     },
+     "sha256": "a913fb9bd058ef380a2d91847c3c23fcf98e92dc3b47cd08a53c021c5cde0f55"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: keyutils 1.5.8 (libkeyutils)",
+   "section": "image",
+   "license": "LGPL-2.1-or-later",
+   "covers": [
+    "psycopg-lib libkeyutils"
+   ],
+   "texts": [
+    {
+     "name": "keyutils-1.5.8/LICENCE.LGPL (official keyutils-1.5.8.tar.bz2, people.redhat.com/~dhowells)",
+     "url": "https://people.redhat.com/~dhowells/keyutils/keyutils-1.5.8.tar.bz2",
+     "extract": {
+      "tar_member": "keyutils-1.5.8/LICENCE.LGPL"
+     },
+     "sha256": "6c7da37272eb39abc2ebafc9ba4a580d7cf8725b61e1db21e508de7ab24b819c"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: libselinux 2.5",
+   "section": "image",
+   "license": "Public-Domain (see text)",
+   "covers": [
+    "psycopg-lib libselinux"
+   ],
+   "texts": [
+    {
+     "name": "libselinux/LICENSE (SELinuxProject/selinux@libselinux-2.5)",
+     "url": "https://raw.githubusercontent.com/SELinuxProject/selinux/libselinux-2.5/libselinux/LICENSE",
+     "sha256": "86657b4c0fe868d7cbd977cb04c63b6c667e08fa51595a7bc846ad4bed8fc364"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: e2fsprogs 1.42.9 com_err (libcom_err)",
+   "section": "image",
+   "license": "MIT-style (lib/et, see text)",
+   "covers": [
+    "psycopg-lib libcom_err"
+   ],
+   "note": "e2fsprogs 顶层 COPYING 声明 lib/et 为 MIT 式许可、条款见源文件头；两者均内联。",
+   "texts": [
+    {
+     "name": "COPYING § header (tytso/e2fsprogs@v1.42.9)",
+     "url": "https://raw.githubusercontent.com/tytso/e2fsprogs/v1.42.9/COPYING",
+     "extract": {
+      "start": "\\A",
+      "end": "^-{20,}"
+     },
+     "sha256": "680f852df303874fe9c722283a7da571ae9a0477768df8af1e363298e2adc51e"
+    },
+    {
+     "name": "lib/et/com_err.c header (tytso/e2fsprogs@v1.42.9)",
+     "url": "https://raw.githubusercontent.com/tytso/e2fsprogs/v1.42.9/lib/et/com_err.c",
+     "extract": {
+      "head_comment": true
+     },
+     "sha256": "873d31d80fa2f930d13b3fb600159663d54861af0abb937c1b879b74e11db0ab"
+    }
+   ]
+  },
+  {
+   "label": "psycopg-binary 3.3.6 bundled: GNU C Library 2.17 libcrypt (libcrypt)",
+   "section": "image",
+   "license": "LGPL-2.1-or-later (see text)",
+   "covers": [
+    "psycopg-lib libcrypt"
+   ],
+   "note": "libcrypt.so.1 仅依赖 GLIBC 版本符号、无 libxcrypt 标识，来自 manylinux2014（CentOS 7）glibc 2.17。",
+   "texts": [
+    {
+     "name": "COPYING.LIB (sourceware glibc.git@glibc-2.17)",
+     "url": "https://sourceware.org/git/?p=glibc.git;a=blob_plain;f=COPYING.LIB;hb=glibc-2.17",
+     "sha256": "ca0061fc1381a3ab242310e4b3f56389f28e3d460eb2fd822ed7a21c6f030532"
+    },
+    {
+     "name": "LICENSES (sourceware glibc.git@glibc-2.17)",
+     "url": "https://sourceware.org/git/?p=glibc.git;a=blob_plain;f=LICENSES;hb=glibc-2.17",
+     "sha256": "61abdd6930c9c599062d89e916b3e7968783879b6be0ee1c6229dd6169def431"
+    }
+   ]
+  },
+  {
+   "label": "docker-ce-cli 29.9.2 (/usr/bin/docker; Debian package from download.docker.com ships no copyright file)",
+   "section": "image",
+   "license": "Apache-2.0",
+   "covers": [
+    "debian docker-ce-cli",
+    "docker-bin docker 29.9.2"
+   ],
+   "note": "docker/cli 以 vendor 方式构建，二进制无模块信息；其 vendored Go 模块按上游 vendor/modules.txt 逐个取模块许可，见「Go modules linked into Docker CLI plugins/CLI」段。",
+   "texts": [
+    {
+     "name": "LICENSE (docker/cli@v29.9.2)",
+     "url": "https://raw.githubusercontent.com/docker/cli/v29.9.2/LICENSE",
+     "sha256": "2d81ea060825006fc8f3fe28aa5dc0ffeb80faf325b612c955229157b8c10dc0"
+    },
+    {
+     "name": "NOTICE (docker/cli@v29.9.2)",
+     "url": "https://raw.githubusercontent.com/docker/cli/v29.9.2/NOTICE",
+     "sha256": "a8c869fbda819afb8d80e0ac19bac52e766bc6c19cb38cf94f52d64c4be2aab6"
+    }
+   ]
+  },
+  {
+   "label": "docker-buildx-plugin 0.38.1 (/usr/libexec/docker/cli-plugins/docker-buildx; ships no copyright file)",
+   "section": "image",
+   "license": "Apache-2.0",
+   "covers": [
+    "debian docker-buildx-plugin",
+    "docker-bin docker-buildx v0.38.1"
+   ],
+   "texts": [
+    {
+     "name": "LICENSE (docker/buildx@v0.38.1)",
+     "url": "https://raw.githubusercontent.com/docker/buildx/v0.38.1/LICENSE",
+     "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    }
+   ]
+  },
+  {
+   "label": "docker-compose-plugin 5.6.1 (/usr/libexec/docker/cli-plugins/docker-compose; ships no copyright file)",
+   "section": "image",
+   "license": "Apache-2.0",
+   "covers": [
+    "debian docker-compose-plugin",
+    "docker-bin docker-compose v5.6.1"
+   ],
+   "texts": [
+    {
+     "name": "LICENSE (docker/compose@v5.6.1)",
+     "url": "https://raw.githubusercontent.com/docker/compose/v5.6.1/LICENSE",
+     "sha256": "58d1e17ffe5109a7ae296caafcadfdbe6a7d176f0bc4ab01e12a689b0499d8bd"
+    },
+    {
+     "name": "NOTICE (docker/compose@v5.6.1)",
+     "url": "https://raw.githubusercontent.com/docker/compose/v5.6.1/NOTICE",
+     "sha256": "b7dca0a6b01fa7365e4892877a6321179ee343d72ee87a96cfc222141b99a1e6"
+    }
+   ]
+  }
+ ],
+ "docker_cli_vendor": {
+  "name": "vendor/modules.txt (docker/cli@v29.9.2)",
+  "url": "https://raw.githubusercontent.com/docker/cli/v29.9.2/vendor/modules.txt",
+  "sha256": "f7d72777b483c4880f2423083315d3277712287c75f888772d61ce7d7186c25c"
+ }
+}

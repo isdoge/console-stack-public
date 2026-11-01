@@ -210,6 +210,33 @@ class TestLegacyCompatibility:
             expected = (REPO_DIR / 'instance/private' / document['roots'][name]).resolve()
             assert str(expected) == legacy['roots'][name], name
 
+    def test_image_private_composition_matches_checked_in_private_instance(self):
+        """B7 runbook 阶段 4 P2：镜像内私人组合只换 roots 到 /app 布局，策略逐项不变。
+
+        roots 与私人 compose 的挂载同形：yaml 平铺 /app、data/backup 为挂载点、
+        static 为前端产物、plugins 为全量插件拷贝。
+        """
+        if not (REPO_DIR / 'instance/private/image-composition.json').is_file():
+            pytest.skip('公共导出树不含 instance/private（私人实例只在私人仓）')
+        private = json.loads(
+            (REPO_DIR / 'instance/private/composition.json').read_text(encoding='utf-8'))
+        image = json.loads(
+            (REPO_DIR / 'instance/private/image-composition.json').read_text(encoding='utf-8'))
+        assert image['profile'] == private['profile'] == 'private'
+        assert image['host'] == private['host']
+        assert image['alert_machines'] == private['alert_machines']
+        assert image['roots'] == {
+            'config': '/app', 'data': '/app/data', 'static': '/app/static',
+            'backup': '/app/backup', 'plugins': '/app/plugins',
+        }
+        dockerfile = (REPO_DIR / 'console/Dockerfile').read_text(encoding='utf-8')
+        personal = dockerfile.split('AS with-personal', 1)[1]
+        assert 'instance/private/image-composition.json /app/private-composition.json' in personal
+        assert 'ENV CONSOLE_BUILD_IDENTITY_FILE=/app/build-identity.json' in personal
+        compose = (REPO_DIR / 'docker-compose.yml').read_text(encoding='utf-8')
+        assert '/app/backup:ro' in compose and './console/backend/data:/app/data' in compose
+        assert 'CONSOLE_COMPOSITION_FILE: ${CONSOLE_COMPOSITION_FILE:-}' in compose
+
     def test_bootstrap_does_not_change_env_without_file(self, monkeypatch):
         composition.bootstrap_environment()
         for key in (

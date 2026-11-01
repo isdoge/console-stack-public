@@ -925,7 +925,8 @@ export function DevicesRoute({ refreshKey, refreshForce = true, onLoaded }: Prop
         containers={monitor.containers || []}
         loading={loading}
         subtitle={<>数据来源 {monitor.source === 'console_pg' ? 'Console PG' : 'Beszel'} · 自动刷新 {Math.round(interval / 60)} 分钟
-          {monitor.updated_at && <> · 上次更新 <DisplayTime value={monitor.updated_at} /></>}
+          {/* 监控快照 updated_at 由后端按 UTC 输出且不带时区后缀；与服务采样同一行，统一换成本地时间。 */}
+          {monitor.updated_at && <> · 上次更新 <DisplayTime value={monitor.updated_at} assumeUtc /></>}
           {monitor.snapshot?.refreshing && <> · 监控更新中</>}
           {monitor.snapshot?.error && <> · 监控更新失败，显示上次结果</>}
           {servicesSnapshot?.sampledAt && <> · 服务采样 <DisplayTime value={servicesSnapshot.sampledAt} /></>}
@@ -980,7 +981,7 @@ export function DevicesRoute({ refreshKey, refreshForce = true, onLoaded }: Prop
           navigation={navigation}
           loading={loading}
           subtitle={<>{activeMachine.label} · 数据来源 {monitor.source === 'console_pg' ? 'Console PG' : 'Beszel'}
-            {monitor.updated_at && <> · 监控采样 <DisplayTime value={monitor.updated_at} /></>}
+            {monitor.updated_at && <> · 监控采样 <DisplayTime value={monitor.updated_at} assumeUtc /></>}
             {monitor.snapshot?.refreshing && <> · 监控更新中</>}
             {monitor.snapshot?.error && <> · 监控更新失败，显示上次结果</>}
             {servicesSnapshot?.sampledAt && <> · 服务采样 <DisplayTime value={servicesSnapshot.sampledAt} /></>}

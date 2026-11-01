@@ -553,16 +553,22 @@ def _panels_file_is_empty(path):
     return text.strip() in ("", "[]")
 
 
-def deployment_environment(root, environ=None):
-    """Resolve host deployment settings without sourcing shell or silently choosing SQLite.
+DEPLOY_ENV_KEYS = frozenset({
+    "CONSOLE_STORAGE_ENGINE", "CONSOLE_PG_DB", "CONSOLE_PG_BACKUP_CONTAINER",
+    "CONSOLE_PG_BACKUP_USER", "CONSOLE_PG_BACKUP_DB", "CONSOLE_PG_ADMIN_PASSWORD_FILE",
+    "CONSOLE_PAY_DATA_DIR", "CONSOLE_PANELS_HOST_PATH",
+    # B7 runbook 阶段 4 P3：宿主侧组合身份文件（由 sync-identity 从运行镜像同步）。
+    # 不能直接用 CONSOLE_BUILD_IDENTITY_FILE 这个键：.env 同时是 console 容器的
+    # env_file，宿主路径会覆盖镜像内 /app/build-identity.json，导致容器拒绝启动。
+    "CONSOLE_BACKUP_IDENTITY_FILE", "CONSOLE_IDENTITY_CONTAINER",
+})
+IDENTITY_IN_IMAGE = "/app/build-identity.json"
+STATIC_IDENTITY_IN_IMAGE = "/app/static/build-identity.json"
+DEFAULT_IDENTITY_CONTAINER = "console-brain"
 
-    .env is the Compose deployment configuration. Only the operational allowlist is
-    read; passwords and unrelated application configuration stay in that file.
-    """
-    environ = dict(os.environ if environ is None else environ)
-    allowed = {"CONSOLE_STORAGE_ENGINE", "CONSOLE_PG_DB", "CONSOLE_PG_BACKUP_CONTAINER",
-               "CONSOLE_PG_BACKUP_USER", "CONSOLE_PG_BACKUP_DB", "CONSOLE_PG_ADMIN_PASSWORD_FILE",
-               "CONSOLE_PAY_DATA_DIR", "CONSOLE_PANELS_HOST_PATH"}
+
+def _deploy_env_values(root, allowed):
+    """只读部署 .env 的白名单键（不 source shell，不读口令等无关配置）。"""
     path = Path(root) / ".env"
     configured = {}
     if path.is_file():
@@ -575,6 +581,101 @@ def deployment_environment(root, environ=None):
             if len(values) != 1 or key in configured:
                 raise ValueError(f"部署 .env 的 {key} 为空、重复或格式不受支持")
             configured[key] = values[0]
+    return configured
+
+
+def _identity_module():
+    import composition_identity  # backup_db 已把 console/backend 放进 sys.path
+    return composition_identity
+
+
+def backup_identity_environment(result, root):
+    """配置了 CONSOLE_BACKUP_IDENTITY_FILE 时，把它校验后接成备份读取的
+    CONSOLE_BUILD_IDENTITY_FILE（v2 manifest）。显式开关：文件缺失/损坏一律拒绝，
+    不静默退回 v1；未配置时保持现役 v1 行为。
+
+    v2 需要组件登记报告，报告按插件根的组合声明核对。定时 cron 跑的是
+    `<backup>/.runtime` 里的固化控制器，控制器目录没有插件树（隔离实跑实测：
+    「插件组合清单缺失」），所以同时把插件根钉到部署检出 `<root>/plugins`——
+    与构建镜像的是同一份源码。"""
+    configured = (result.get("CONSOLE_BACKUP_IDENTITY_FILE") or "").strip()
+    if not configured:
+        return result
+    path = Path(configured)
+    if not path.is_absolute() or path.is_symlink() or not path.is_file():
+        raise ValueError("CONSOLE_BACKUP_IDENTITY_FILE 必须是存在的宿主绝对普通文件"
+                         "（部署后由 backup_runtime.py sync-identity 生成）")
+    try:
+        _identity_module().read(path)
+    except ValueError as exc:
+        raise ValueError(f"CONSOLE_BACKUP_IDENTITY_FILE 不是有效的组合身份：{exc}") from exc
+    existing = (result.get("CONSOLE_BUILD_IDENTITY_FILE") or "").strip()
+    if existing and Path(existing).resolve() != path.resolve():
+        raise ValueError("宿主环境 CONSOLE_BUILD_IDENTITY_FILE 与部署 .env 的 "
+                         "CONSOLE_BACKUP_IDENTITY_FILE 冲突，拒绝继续")
+    plugins = (Path(root) / "plugins").resolve()
+    contract = plugins / "contract.json"
+    if not contract.is_file() or contract.is_symlink():
+        raise ValueError(f"v2 备份需要部署检出的插件根（缺 {contract}）")
+    existing_plugins = (result.get("CONSOLE_PLUGIN_ROOT") or "").strip()
+    if existing_plugins and Path(existing_plugins).resolve() != plugins:
+        raise ValueError("宿主环境 CONSOLE_PLUGIN_ROOT 与部署检出插件根冲突，拒绝继续")
+    result["CONSOLE_BUILD_IDENTITY_FILE"] = str(path)
+    result["CONSOLE_PLUGIN_ROOT"] = str(plugins)
+    return result
+
+
+def sync_identity(root, *, lock_fd=None, container=None):
+    """从运行中的 console 容器把组合身份原子同步到 CONSOLE_BACKUP_IDENTITY_FILE。
+
+    未配置该键时跳过（现役 v1）。容器内运行时身份与前端静态身份必须一致且通过
+    白名单校验，才替换宿主文件；任何失败都不动旧文件。
+    """
+    if lock_fd is not None:
+        check_deploy_lock(root, lock_fd)
+    configured = _deploy_env_values(root, DEPLOY_ENV_KEYS)
+    target = (configured.get("CONSOLE_BACKUP_IDENTITY_FILE")
+              or os.environ.get("CONSOLE_BACKUP_IDENTITY_FILE") or "").strip()
+    if not target:
+        return {"status": "skipped", "reason": "CONSOLE_BACKUP_IDENTITY_FILE 未配置"}
+    target = Path(target)
+    if not target.is_absolute():
+        raise ValueError("CONSOLE_BACKUP_IDENTITY_FILE 必须是宿主绝对路径")
+    container = (container or configured.get("CONSOLE_IDENTITY_CONTAINER")
+                 or DEFAULT_IDENTITY_CONTAINER)
+    module = _identity_module()
+    documents = []
+    for source in (IDENTITY_IN_IMAGE, STATIC_IDENTITY_IN_IMAGE):
+        result = run_command(root, "docker", "exec", container, "cat", source,
+                             timeout=30, lock_fd=lock_fd)
+        documents.append((module.loads(result.stdout), result.stdout))
+    (runtime, raw), (static, _) = documents
+    if runtime != static:
+        raise ValueError("运行镜像内前后端组合身份不一致，拒绝同步")
+    target.parent.mkdir(parents=True, exist_ok=True)
+    handle = tempfile.NamedTemporaryFile("w", dir=target.parent, prefix=".identity-",
+                                         delete=False, encoding="utf-8")
+    try:
+        with handle:
+            handle.write(raw)
+        os.chmod(handle.name, 0o644)
+        os.replace(handle.name, target)
+    finally:
+        Path(handle.name).unlink(missing_ok=True)
+    return {"status": "synced", "path": str(target), "container": container,
+            "composition_digest": runtime["composition_digest"],
+            "kernel_version": runtime["kernel"]["version"],
+            "plugins": [plugin["id"] for plugin in runtime["plugins"]]}
+
+
+def deployment_environment(root, environ=None):
+    """Resolve host deployment settings without sourcing shell or silently choosing SQLite.
+
+    .env is the Compose deployment configuration. Only the operational allowlist is
+    read; passwords and unrelated application configuration stay in that file.
+    """
+    environ = dict(os.environ if environ is None else environ)
+    configured = _deploy_env_values(root, DEPLOY_ENV_KEYS)
     for key, value in configured.items():
         if environ.get(key) and environ[key] != value:
             same_panels_file = (key == "CONSOLE_PANELS_HOST_PATH"
@@ -598,6 +699,7 @@ def deployment_environment(root, environ=None):
         if result.get("CONSOLE_PG_BACKUP_DB", database) != database:
             raise ValueError("PG 备份库与部署业务库不一致，拒绝继续")
         result["CONSOLE_PG_BACKUP_DB"] = database
+    backup_identity_environment(result, root)
     tracked_panels = Path(root) / "console" / "panels.yaml"
     if tracked_panels.is_file() and _panels_file_is_empty(tracked_panels):
         # 走到这里说明 Git 侧私有化已完成（tracked 刻意留空），容器只能从
@@ -2233,7 +2335,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
     for command in ("retire", "deploy", "check-lock", "rollback", "publish-runtime",
-                    "cron-migration", "timed", "cutover", "deploy-schema", "deploy-accept"):
+                    "cron-migration", "timed", "cutover", "deploy-schema", "deploy-accept",
+                    "sync-identity"):
         child = sub.add_parser(command)
         child.add_argument("root", type=Path)
         if command == "deploy":
@@ -2243,7 +2346,7 @@ def main():
         elif command in ("deploy-schema", "deploy-accept"):
             child.add_argument("tag")
             child.add_argument("--lock-fd", type=int, required=True)
-        elif command == "publish-runtime":
+        elif command in ("publish-runtime", "sync-identity"):
             child.add_argument("--lock-fd", type=int)
         elif command == "rollback":
             child.add_argument("tag")
@@ -2293,6 +2396,8 @@ def main():
         elif args.command == "publish-runtime":
             print(json.dumps(publish_runtime(args.root, lock_fd=args.lock_fd),
                              ensure_ascii=False, indent=2))
+        elif args.command == "sync-identity":
+            print(json.dumps(sync_identity(args.root, lock_fd=args.lock_fd), ensure_ascii=False))
         elif args.command == "cron-migration":
             print(json.dumps(cron_migration_plan(args.root), ensure_ascii=False, indent=2))
         elif args.command == "cutover":

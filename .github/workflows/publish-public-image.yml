@@ -38,6 +38,23 @@ jobs:
           IMG=ghcr.io/${{ github.repository_owner }}/console-stack-public
           echo "tags=${IMG}:sha-${TIP_SHORT},${IMG}:src-${SHORT_SRC},${IMG}:latest" >> "$GITHUB_OUTPUT"
           echo "immutable=${IMG}:sha-${TIP_SHORT}" >> "$GITHUB_OUTPUT"
+      - name: Build public image (local, for license check)
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: console/Dockerfile
+          target: public
+          load: true
+          tags: console-stack-public:license-check
+          provenance: false
+      - name: Verify bundled licenses cover the image
+        run: |
+          # 发布前 fail closed：GAPS=0，每个 dpkg 包 / psycopg 内嵌原生库 / node / python /
+          # docker CLI 与插件都在 THIRD_PARTY_LICENSES 的 COVERAGE 内。
+          docker run --rm -i --entrypoint python console-stack-public:license-check - \
+            --verify-image /app/THIRD_PARTY_LICENSES.txt \
+            --static-copy /app/static/THIRD_PARTY_LICENSES.txt \
+            < scripts/gen_third_party_licenses.py | tee /tmp/licenses.json
       - name: Build and push public image
         uses: docker/build-push-action@v6
         with:

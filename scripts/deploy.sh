@@ -249,6 +249,9 @@ docker compose up -d --no-build
 # 「线上跑的哪个 commit / 对应哪组备份 / 迁移到第几号」。放在重建之后写，记录的才是
 # 真正起来的那一版；构建失败时不会留下一份「部署成功」的假凭证。
 python3 "$SCRIPT_DIR/backup_runtime.py" deploy-accept "$PROJECT_DIR" "$TAG" --lock-fd "$CONSOLE_DEPLOY_LOCK_FD"
+# B7 runbook 阶段 4 P3：部署 .env 配了 CONSOLE_BACKUP_IDENTITY_FILE 时，把新镜像的组合身份
+# 原子同步到宿主，定时/部署前备份据此写 manifest v2；未配置时跳过（现役 v1）。
+python3 "$SCRIPT_DIR/backup_runtime.py" sync-identity "$PROJECT_DIR" --lock-fd "$CONSOLE_DEPLOY_LOCK_FD"
 
 echo ""
 echo "✅ 部署完成。服务状态:"

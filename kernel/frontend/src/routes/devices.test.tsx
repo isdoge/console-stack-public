@@ -524,3 +524,40 @@ describe('DevicesRoute 机器对比入口（M3）', () => {
     await waitFor(() => expect(mockedCapacity).toHaveBeenCalled());
   });
 });
+
+describe('设备页时间同一行统一本地时间（B7 t41u 第二批 C）', () => {
+  // 线上实测：「上次更新 2026-11-01 11:54:59 · 服务采样 2026-11-01 19:49:12」——前者是后端
+  // 无时区后缀的 UTC，后者已按本地显示。两者都必须解析成同一时刻体系并按本地时间展示。
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const local = (iso: string) => {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+  };
+  const timeFor = (raw: string) => Array.from(document.querySelectorAll('time'))
+    .find((node) => node.getAttribute('title')?.includes(`原始值：${raw}`));
+
+  beforeEach(() => {
+    mockedMonitor.mockResolvedValue({
+      source: 'console_pg', updated_at: '2026-11-01 11:54:59',
+      systems: [{ id: '1', name: 'NAS', machine: 'nas', status: 'up' }], containers: [],
+    });
+    mockedServices.mockResolvedValue({
+      services: [{ name: 'console-brain', machine: 'nas', running: 'running', actions: [] }],
+      snapshot: { sampledAt: '2026-11-01T11:49:12Z', refreshing: false, error: false },
+    });
+  });
+
+  test.each([['/devices', '上次更新'], ['/devices/nas', '监控采样']])('%s：%s 与服务采样都按本地时间', async (path, label) => {
+    renderRoute(path);
+    await screen.findByText('console-brain');
+    await waitFor(() => expect(timeFor('2026-11-01 11:54:59')).toBeTruthy());
+    const monitorTime = timeFor('2026-11-01 11:54:59')!;
+    const servicesTime = timeFor('2026-11-01T11:49:12Z')!;
+    expect(monitorTime.getAttribute('dateTime')).toBe('2026-11-01T11:54:59.000Z');
+    expect(monitorTime.textContent).toBe(local('2026-11-01T11:54:59Z'));
+    expect(servicesTime.getAttribute('dateTime')).toBe('2026-11-01T11:49:12.000Z');
+    expect(servicesTime.textContent).toBe(local('2026-11-01T11:49:12Z'));
+    expect(monitorTime.getAttribute('title')).toContain('本地：');
+    expect(monitorTime.closest('*')?.parentElement?.textContent).toContain(label);
+  });
+});

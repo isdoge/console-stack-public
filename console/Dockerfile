@@ -15,6 +15,25 @@ COPY instance/public /workspace/instance/public
 ENV CONSOLE_COMPOSITION_FILE=/workspace/instance/public/composition.json
 RUN npm run build
 
+# ---- 组合身份（私人全量）：kernel + 全量插件源码 → build-identity.json ----
+# B7 生产 runbook 阶段 4 P1：同一份身份文件同时交给前端构建（vite 写出
+# static/build-identity.json）与运行时（CONSOLE_BUILD_IDENTITY_FILE），
+# composition_identity.verify_static() 启动时比对二者，不一致拒绝启动；
+# 备份 manifest v2 的 composition 块也取自这份文件。
+# 版本取发布 SHA（deploy.sh 导出 GIT_COMMIT）；裸构建为 dev。
+FROM python:3.10-slim-bookworm AS composition-identity
+WORKDIR /workspace
+COPY kernel /workspace/kernel
+COPY plugins /workspace/plugins
+# 脚本默认把 console/backend（kernel 真身的转发 shim）放进 sys.path；本 stage 不拷 shim，
+# 直接以 kernel/backend 真身解析 composition / composition_identity / plugin_manifest。
+ENV PYTHONPATH=/workspace/kernel/backend
+COPY scripts/build_composition_identity.py /workspace/scripts/
+ARG GIT_COMMIT=dev
+RUN python scripts/build_composition_identity.py --kernel-root /workspace/kernel \
+      --plugins-root /workspace/plugins --version "${GIT_COMMIT}" \
+      --output /workspace/build-identity.json
+
 # ---- 前端：私人全量（现役七插件清单）----
 FROM node:24-alpine AS frontend-personal
 WORKDIR /workspace/kernel/frontend
@@ -23,6 +42,8 @@ RUN npm ci
 COPY kernel/frontend/ ./
 COPY theme /workspace/theme
 COPY plugins /workspace/plugins
+COPY --from=composition-identity /workspace/build-identity.json /workspace/build-identity.json
+ENV CONSOLE_BUILD_IDENTITY_FILE=/workspace/build-identity.json
 RUN npm run build
 
 # ---- 同发行版 Node 运行时（六工具，无 npm / dev server） ----
@@ -125,6 +146,13 @@ COPY console/backend/beszel_api.py \
 COPY plugins /app/plugins
 COPY tools/personal-workbench /app/tools/personal-workbench
 COPY --from=frontend-personal /workspace/kernel/frontend/dist /app/static
+# 阶段 4 P1：运行时组合身份（与 /app/static/build-identity.json 同一份）。
+COPY --from=composition-identity /workspace/build-identity.json /app/build-identity.json
+ENV CONSOLE_BUILD_IDENTITY_FILE=/app/build-identity.json
+# 阶段 4 P2：镜像内私人组合（roots 指向 /app 布局）。组件模式仍是显式开关：
+# 默认 CONSOLE_COMPOSITION_FILE 为空（遗产闸门）；adopt + 授权完成后由部署 .env 设为
+# /app/private-composition.json 才进入组件闸门，否则未接管库会以退出码 3 拒绝启动。
+COPY instance/private/image-composition.json /app/private-composition.json
 COPY kernel/LICENSE /app/static/LICENSE.txt
 COPY kernel/NOTICE /app/static/NOTICE.txt
 COPY kernel/THIRD_PARTY_LICENSES.txt /app/static/THIRD_PARTY_LICENSES.txt

@@ -9,9 +9,17 @@ Docker `public` image, the Go agent’s direct module, and documented UI/theme
 references). Versions below are from the 2026-11-01 B7-6 packaging machine;
 rebuilds should refresh this file from the locked install used for that build.
 
-This file is not a claim that every transitive native library inside
-psycopg-binary wheels has been re-audited byte-for-byte. LGPL components
-(psycopg*) remain LGPL; using them does not relicense this project’s MIT code.
+Full license texts for the complete distribution closure live in
+THIRD_PARTY_LICENSES.txt (shipped at /app and /app/static in the image): the npm,
+Python and Go closures, the Node.js binary, CPython, every native library bundled
+in the psycopg-binary wheel (libpq/PostgreSQL, OpenSSL, OpenLDAP, MIT Kerberos,
+Cyrus SASL, PCRE, keyutils, libselinux, e2fsprogs com_err, glibc libcrypt), the
+Docker CLI/buildx/compose binaries and the Go modules linked into them, and every
+Debian package in the image with its /usr/share/doc/*/copyright file. Texts not
+shipped inside a package were taken from the upstream original source named next
+to each text and pinned by sha256 (scripts/third_party_upstream.json). LGPL
+components (psycopg*, keyutils, glibc libcrypt) remain LGPL; using them does not
+relicense this project’s MIT code.
 
 --------------------------------------------------------------------
 A. Frontend production npm dependencies (direct)

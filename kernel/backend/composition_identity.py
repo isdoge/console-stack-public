@@ -68,6 +68,22 @@ def _finite_float(value):
     return result
 
 
+def _strict_loads(text):
+    return json.loads(text, object_pairs_hook=_strict_object,
+                      parse_constant=_reject_constant, parse_float=_finite_float)
+
+
+def loads(text):
+    """从文本严格解析并校验身份（宿主从容器 `cat` 取回时用；不落临时文件）。"""
+    try:
+        document = _strict_loads(text)
+    except IdentityError:
+        raise
+    except ValueError as exc:
+        raise IdentityError("组合构建身份不可读取或格式错误") from exc
+    return validate(document)
+
+
 def read_json(path, *, label="组合构建身份"):
     """严格读取构建输入；路径与其祖先均不能经过符号链接。"""
     try:
@@ -77,10 +93,7 @@ def read_json(path, *, label="组合构建身份"):
         file = composition.resolve_root_path(Path.cwd(), label, file)
         if not file.is_file():
             raise IdentityError(f"{label}缺失或不是普通文件")
-        return json.loads(
-            file.read_text(encoding="utf-8"), object_pairs_hook=_strict_object,
-            parse_constant=_reject_constant, parse_float=_finite_float,
-        )
+        return _strict_loads(file.read_text(encoding="utf-8"))
     except IdentityError:
         raise
     except (OSError, UnicodeError, ValueError) as exc:
