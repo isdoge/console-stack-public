@@ -18,27 +18,29 @@ This repository is the **public composition** of [console-stack](https://github.
 - Private backend bridges and production YAML / secrets / agent identity
 - Private Git history from the operator’s monorepo
 
-## Quick start (Docker)
+## Install / upgrade
 
-```bash
-# from this repository root
-DOCKER_BUILDKIT=1 docker build -f console/Dockerfile --target public -t console-stack-public:local .
-```
+- Install (Docker Compose, PostgreSQL 16, single host): [docs/install.md](docs/install.md)
+- Upgrade, offline upgrade, backup and rollback: [docs/upgrade.md](docs/upgrade.md)
 
-Published image (first public release):
+`docker-compose.yml` builds the `public` target by default (kernel only, empty plugin composition, empty ledger). Set `CONSOLE_IMAGE` in `.env` to use a published image instead of building.
 
-```text
-ghcr.io/isdoge/console-stack-public:<tag>
-```
+Published images (`ghcr.io/isdoge/console-stack-public`):
 
-Compose defaults bind the web UI to loopback. Point Postgres and roles via `.env` (see `.env.example`). Public profile uses an empty machine ledger unless you supply config.
+| Tag | Meaning |
+| --- | --- |
+| `sha-<public commit>` | immutable per public commit (use this in `.env`) |
+| `src-<private source commit>` | the private monorepo commit the tree was exported from |
+| `latest` | moving pointer to the newest `main` build |
 
 ## License / provenance
 
 - Project license: [LICENSE](./LICENSE) (MIT)
+- Full dependency-closure license texts: [kernel/THIRD_PARTY_LICENSES.txt](./kernel/THIRD_PARTY_LICENSES.txt) (generated; GAPS listed at the end)
+- The image ships LICENSE / NOTICE / THIRD_PARTY_LICENSES.txt under `/app` and serves them at `/LICENSE.txt`, `/NOTICE.txt`, `/THIRD_PARTY_LICENSES.txt`
 - Third-party notices: [NOTICE](./NOTICE) (npm production deps, public Python runtime, gopsutil, referenced UI upstreams)
 - Public `requirements.txt` excludes private plugin parsers (feedparser/openpyxl/pdfplumber)
-- Remaining gaps (full lockfile closure inlining, favicon provenance, native wheel internals) are listed at the end of NOTICE
+- Remaining gaps (favicon provenance, native wheel internals, base-image packages) are listed at the end of NOTICE / THIRD_PARTY_LICENSES.txt
 
 ## Source identity
 

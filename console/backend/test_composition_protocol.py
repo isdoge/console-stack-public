@@ -244,7 +244,7 @@ class TestProfileAndFileConflicts:
 
 class TestDocumentValidation:
     @pytest.mark.parametrize('case', json.loads(
-        (REPO_DIR / 'console/testdata/composition-protocol.json').read_text(encoding='utf-8'),
+        (REPO_DIR / 'kernel/testdata/composition-protocol.json').read_text(encoding='utf-8'),
     ), ids=lambda case: case['name'])
     def test_shared_frontend_backend_inputs(self, tmp_path, monkeypatch, case):
         _plugins_root(tmp_path)

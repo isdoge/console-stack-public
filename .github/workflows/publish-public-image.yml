@@ -5,7 +5,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'console/Dockerfile'
+      - 'console/**'
       - 'kernel/**'
       - 'plugins/**'
       - 'instance/public/**'
@@ -31,10 +31,13 @@ jobs:
       - name: Derive tags
         id: meta
         run: |
+          # 不可变：sha-<公共仓 commit>；溯源：src-<私人源 commit>；移动指针：latest。
+          # （首发曾用裸 <源 sha> 作 tag，后续同源重发覆盖导致回执 digest 过期，已弃用。）
           SHORT_SRC=$(cut -c1-7 .b7-source-sha)
           TIP_SHORT=${GITHUB_SHA::7}
-          echo "tags=ghcr.io/${{ github.repository_owner }}/console-stack-public:${SHORT_SRC},ghcr.io/${{ github.repository_owner }}/console-stack-public:public-first,ghcr.io/${{ github.repository_owner }}/console-stack-public:sha-${TIP_SHORT}" >> "$GITHUB_OUTPUT"
-          echo "short_src=${SHORT_SRC}" >> "$GITHUB_OUTPUT"
+          IMG=ghcr.io/${{ github.repository_owner }}/console-stack-public
+          echo "tags=${IMG}:sha-${TIP_SHORT},${IMG}:src-${SHORT_SRC},${IMG}:latest" >> "$GITHUB_OUTPUT"
+          echo "immutable=${IMG}:sha-${TIP_SHORT}" >> "$GITHUB_OUTPUT"
       - name: Build and push public image
         uses: docker/build-push-action@v6
         with:
@@ -46,7 +49,13 @@ jobs:
           provenance: false
       - name: Record digest
         run: |
-          docker buildx imagetools inspect "ghcr.io/${{ github.repository_owner }}/console-stack-public:${{ steps.meta.outputs.short_src }}"
+          docker buildx imagetools inspect "${{ steps.meta.outputs.immutable }}" | tee /tmp/inspect.txt
+          {
+            echo "### Published"
+            echo '```'
+            cat /tmp/inspect.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
       - name: Make package public
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

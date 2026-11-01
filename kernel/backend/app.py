@@ -1412,12 +1412,13 @@ def serve_frontend(path):
     `api/` / `actions/` / `beszel/` 前缀在这里显式 404，不能把漏配路由或已退役 Hub 伪装成前端首页。
     前端未构建（无 static 目录）返回 503。
     """
-    if not os.path.isdir(STATIC_DIR):
-        return jsonify({"error": "frontend not built"}), 503
+    # 先判 API/退役前缀：未注册 API 与前端是否构建无关，必须稳定 404（CI 无 static 时曾误报 503）。
     if path.startswith("api/"):
         return jsonify({"error": "not found"}), 404
     if path.startswith("actions/") or path.startswith("beszel/"):
         return jsonify({"error": "not found"}), 404
+    if not os.path.isdir(STATIC_DIR):
+        return jsonify({"error": "frontend not built"}), 503
     file_path = os.path.join(STATIC_DIR, path)
     if path and os.path.isfile(file_path):
         if path == "manifest.webmanifest":

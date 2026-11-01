@@ -251,3 +251,53 @@ def test_cli_never_imports_the_application():
     component = (REPO / "console/backend/component_migrations.py").read_text(encoding="utf-8")
     assert "\nimport app\n" not in component
     assert "\nfrom app import" not in component
+
+
+def test_grant_app_role_requires_registry_and_password(env, tmp_path):
+    """公共新装运行账号：缺密码 2；登记未建 5（不发账号）。"""
+    root = _zero_plugin_root(tmp_path)
+    proc = _run_zero_plugin(env, root, "grant-app-role", "--role", "console_app")
+    assert proc.returncode == 2, proc.stdout + proc.stderr
+    assert "CONSOLE_APP_ROLE_PASSWORD" in _out(proc)["error"]
+    env_pw = dict(env, CONSOLE_APP_ROLE_PASSWORD="grant-test-pw")
+    proc = _run_zero_plugin(env_pw, root, "grant-app-role", "--role", "console_app")
+    assert proc.returncode == 5, proc.stdout + proc.stderr
+    assert "grant-test-pw" not in proc.stdout + proc.stderr
+    bad = _run_zero_plugin(env_pw, root, "grant-app-role", "--role", "Bad-Role")
+    assert bad.returncode == 2
+
+
+def test_grant_app_role_is_restricted_and_idempotent(env, tmp_path, pg_container, fresh_db):
+    """migrate 后发运行账号：组件表 DML 可用，登记表只读，不能建表；重复执行幂等。"""
+    root = _zero_plugin_root(tmp_path)
+    assert _run_zero_plugin(env, root, "migrate").returncode == 0
+    role = "b7_grant_" + fresh_db[-8:]
+    env_pw = dict(env, CONSOLE_APP_ROLE_PASSWORD="grant-test-pw")
+    admin = connect(pg_container.dsn(dbname=fresh_db), autocommit=True)
+    try:
+        for expected_created in (True, False):
+            proc = _run_zero_plugin(env_pw, root, "grant-app-role", "--role", role)
+            assert proc.returncode == 0, proc.stdout + proc.stderr
+            payload = _out(proc)
+            assert payload["created"] is expected_created
+            assert "grant-test-pw" not in proc.stdout + proc.stderr
+            assert "versions" in payload["tables"]
+            assert "ledger_tx" not in payload["tables"]
+        app = connect(pg_container.dsn(dbname=fresh_db, user=role, password="grant-test-pw"),
+                      autocommit=True)
+        try:
+            app.execute("SELECT count(*) FROM versions").fetchone()
+            app.execute("SELECT count(*) FROM component_schema_migrations").fetchone()
+            for statement in (
+                "DELETE FROM component_schema_migrations",
+                "CREATE TABLE b7_grant_probe (id int)",
+            ):
+                with pytest.raises(Exception):
+                    app.execute(statement)
+        finally:
+            app.close()
+    finally:
+        if admin.execute("SELECT 1 FROM pg_roles WHERE rolname = %s", (role,)).fetchone():
+            admin.execute(f'DROP OWNED BY "{role}" CASCADE')
+            admin.execute(f'DROP ROLE IF EXISTS "{role}"')
+        admin.close()

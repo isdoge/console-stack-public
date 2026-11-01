@@ -21,8 +21,10 @@ REPO = Path(__file__).resolve().parents[1]
 
 
 def _tool(instance, tool, dbname=None, user=None):
-    if instance.name == "native":
-        command = [str(instance.bin_dir / tool)]
+    if instance.name in ("native", "external"):
+        # external = CI 服务容器（CONSOLE_PG_TEST_DSN）：没有名为 external 的容器，
+        # 用 PATH 上的 PG16 客户端走 TCP；口令经 PGPASSFILE 提供（见 _pgpass_env）。
+        command = [str(instance.bin_dir / tool) if instance.name == "native" else tool]
         if dbname is not None:
             command += ["-h", instance.host, "-p", str(instance.port)]
     else:
@@ -30,6 +32,18 @@ def _tool(instance, tool, dbname=None, user=None):
     if dbname is not None:
         command += ["-U", user or instance.user, "-d", dbname]
     return command
+
+
+def _pgpass_env(instance, tmp_path, role, password):
+    """external 实例需要口令：管理员与受限角色各一行 pgpass，不进命令行/日志。"""
+    if instance.name != "external":
+        return {"PGPASSWORD": password}
+    passfile = tmp_path / "pgpass"
+    passfile.write_text("".join(
+        f"{instance.host}:{instance.port}:*:{user}:{secret}\n"
+        for user, secret in ((role, password), (instance.user, instance.password))))
+    passfile.chmod(0o600)
+    return {"PGPASSFILE": str(passfile)}
 
 
 def _commands(instance, dbname, user=None):
@@ -301,7 +315,7 @@ def test_fixed_controller_v2_real_restore(pg_container, tmp_path, case):
             CONSOLE_COMPOSITION_FILE=str(composition),
             CONSOLE_INSTANCE_PROFILE="private" if case == "private" else "public",
             CONSOLE_BUILD_IDENTITY_FILE=str(identity), CONSOLE_STORAGE_ENGINE="postgres",
-            CONSOLE_INSTANCE_ROLE="test", PGPASSWORD=password,
+            CONSOLE_INSTANCE_ROLE="test", **_pgpass_env(pg_container, tmp_path, role, password),
             CONSOLE_PAY_DATA_DIR=str(pay), PGOPTIONS="-c timezone=UTC", TZ="UTC",
         )
         # 空提交仅给合成控制器提供source_commit，不提交用户工作树。

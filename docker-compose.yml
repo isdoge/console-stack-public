@@ -1,178 +1,117 @@
+# console-stack public：单机独立安装（PostgreSQL 16 + kernel public 镜像）。
+# 安装 / 升级步骤见 docs/install.md、docs/upgrade.md。
+# - console 默认 build target 为 `public`（不含任何私人插件或 personal-workbench）；
+#   设置 CONSOLE_IMAGE 为已发布镜像（如 ghcr.io/isdoge/console-stack-public:sha-<commit>）
+#   时可直接 `docker compose pull` 使用，不必本地构建。
+# - PG 管理员密码只经 secrets 文件（./secrets/pg-admin.password），不进环境变量；
+#   运行账号（受限 DML）密码来自 .env 的 CONSOLE_PG_PASSWORD。
+# - Web 只绑定宿主回环 127.0.0.1；需要局域网访问请自行加反代与鉴权。
+name: console-stack-public
+
 services:
-  # PG-04（提案 §6.2）：NAS 独立 PostgreSQL，唯一在线业务库（D4–D6/D9）。
-  # 数据落独立数据卷 /vol1/console-stack-data/postgres（不在 console/backend 下，
-  # 已进 .gitignore/.dockerignore 排除防误建）。TZ 显式 UTC（§4.3：NAS 容器运行时区
-  # 本就 UTC，不因宿主在中国就假定 Asia/Shanghai）。密码经 secrets 文件，不进 env。
   console-postgres:
     image: postgres:16-alpine
-    container_name: console-postgres
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
     environment:
-      POSTGRES_DB: console
-      POSTGRES_USER: console_admin
+      POSTGRES_DB: ${CONSOLE_PG_DB:-console}
+      POSTGRES_USER: ${CONSOLE_PG_ADMIN_USER:-console_admin}
       POSTGRES_PASSWORD_FILE: /run/secrets/console_pg_admin
       TZ: UTC
     command: ["postgres", "-c", "timezone=UTC"]
     secrets:
       - console_pg_admin
     volumes:
-      - /vol1/console-stack-data/postgres:/var/lib/postgresql/data
-    ports:
-      # Tailscale 主路径 + LAN 备用（同一实例的显式地址切换，§1.3）。
-      # CI/本地开发用 docker-compose.ci.yml 覆盖：不绑定 NAS IP、不引用生产 secret。
-      - "127.0.0.1:5432:5432"
+      - console-pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U console_admin -d console"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${CONSOLE_PG_ADMIN_USER:-console_admin} -d ${CONSOLE_PG_DB:-console}"]
+      interval: 5s
       timeout: 5s
-      retries: 6
-      start_period: 20s
+      retries: 20
+      start_period: 10s
     networks:
       - console-net
 
-  socket-proxy:
-    image: tecnativa/docker-socket-proxy:v0.5.0
-    container_name: console-socket-proxy
-    restart: unless-stopped
-    security_opt:
-      - no-new-privileges:true
+  # 一次性管理工具：组件 schema 迁移/核对与运行账号授权（管理员连接，读 secrets 文件）。
+  # 用法：docker compose run --rm console-schema migrate|check|grant-app-role ...
+  console-schema:
+    image: ${CONSOLE_IMAGE:-console-stack-public:local}
+    profiles: ["tools"]
+    depends_on:
+      console-postgres:
+        condition: service_healthy
+    working_dir: /workspace
+    entrypoint:
+      - sh
+      - -c
+      - 'CONSOLE_PG_PASSWORD="$$(cat /run/secrets/console_pg_admin)" exec python scripts/pg_component_schema.py "$$@"'
+      - pg_component_schema
     environment:
-      CONTAINERS: 1
-      POST: 1
-      START: 1
-      STOP: 1
-      RESTART: 1
-      AUTH: 0
-      BUILD: 0
-      COMMIT: 0
-      CONFIGS: 0
-      DISTRIBUTION: 0
-      EVENTS: 0
-      EXEC: 0
-      IMAGES: 0
-      INFO: 0
-      NETWORKS: 0
-      NODES: 0
-      PING: 0
-      PLUGINS: 0
-      SECRETS: 0
-      SERVICES: 0
-      SESSION: 0
-      SWARM: 0
-      SYSTEM: 0
-      TASKS: 0
-      VOLUMES: 0
+      CONSOLE_PG_HOST: console-postgres
+      CONSOLE_PG_PORT: "5432"
+      CONSOLE_PG_DB: ${CONSOLE_PG_DB:-console}
+      CONSOLE_PG_USER: ${CONSOLE_PG_ADMIN_USER:-console_admin}
+      CONSOLE_APP_ROLE_PASSWORD: ${CONSOLE_PG_PASSWORD:?缺 CONSOLE_PG_PASSWORD（运行账号密码，见 .env.example）}
+    secrets:
+      - console_pg_admin
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./:/workspace:ro
     networks:
       - console-net
 
   console:
+    image: ${CONSOLE_IMAGE:-console-stack-public:local}
     build:
       context: .
       dockerfile: console/Dockerfile
-      # 私人生产镜像：打入 tools/personal-workbench（默认 Dockerfile stage 为 public，无此 COPY）。
-      target: with-personal
+      # 公共默认：kernel + 合同级空插件根 + 空台账（不含私人插件/personal-workbench）。
+      target: public
       args:
-        # D0-1：running commit 注入。deploy.sh 在 build 前导出 GIT_COMMIT；
-        # 手工 compose build 不带该变量时落到 dev（宁可显示 dev 也不假装有版本）。
         GIT_COMMIT: ${GIT_COMMIT:-dev}
-    container_name: console-brain
-    env_file: .env
-    environment:
-      WORKBENCH_BACKUPS: /app/workbench-backups
-      # C2/W2 tailnet 卡：cron 导出文件源（挂载 ./runtime/tailnet:/app/tailnet:ro）。
-      # 代码语义：设置了该 env 就走文件（失败降级并提示 cron），未设置才回退 socket 直连。
-      CONSOLE_TAILNET_STATUS_FILE: /app/tailnet/status.json
-      # Docker Engine 面收敛到 socket-proxy 白名单（containers/start/stop/restart）
-      # 详见 .agents/archive/project-status-2026-09-18/CHANGELOG.md 2026-07-25 socket-proxy 条目
-      DOCKER_HOST: tcp://socket-proxy:2375
-      # 固定 docker CLI 的目标 API 版本，避免 alpine:latest 装到更新的
-      # docker-cli 后向 socket-proxy 请求超出下游 daemon 支持的版本
-      # （报 "client version too new. Maximum supported API version is 1.54"）。
-      DOCKER_API_VERSION: "1.54"
-      # 存储引擎/实例角色/维护模式（提案 §6.4、§9 D5）。PG-05 §11.5 V4-02 要求三处
-      # 阶段变量在 compose 里显式接线，不能等 app 启动失败后靠核验项 19 补救：
-      #   storage_engine：目标态只有 postgres（D3：无 SQLite 在线 fallback）；
-      #   instance_role ：NAS=authority（唯一自动采集）/ Mac=client（不采集）；
-      #   maintenance_mode：割接冻结期由 cutover_writers.freeze 写成 read_only，
-      #                     open 时恢复；缺省 normal。
-      CONSOLE_STORAGE_ENGINE: ${CONSOLE_STORAGE_ENGINE:-postgres}
-      CONSOLE_INSTANCE_ROLE: ${CONSOLE_INSTANCE_ROLE:-client}
-      CONSOLE_MAINTENANCE_MODE: ${CONSOLE_MAINTENANCE_MODE:-normal}
-      # PG 连接三键是 app 的硬要求（pgdb.py 的 PgConfig.from_env 缺任一即抛
-      # PgConfigError），但只靠 env_file 传递时「缺键」要等容器起来才由 D3 不降级
-      # 闸门变成 SystemExit——2026-09-18 的崩溃循环与 2026-09-13 的 .env 被模板
-      # 覆盖是同一失效模式两次发生。用 :? 把失败提前到 compose 解析期，CI 的
-      # `docker compose config -q` 也就自动成了这条接线的门禁。
-      # 只列 from_env 真正要求的三键；PORT/DB 在代码里有默认值，不设必填。
-      CONSOLE_PG_HOST: ${CONSOLE_PG_HOST:?缺 CONSOLE_PG_HOST——PG 是唯一在线存储，无 SQLite 降级}
-      CONSOLE_PG_USER: ${CONSOLE_PG_USER:?缺 CONSOLE_PG_USER}
-      CONSOLE_PG_PASSWORD: ${CONSOLE_PG_PASSWORD:?缺 CONSOLE_PG_PASSWORD}
-      # Workstation 功能：信息聚合数据源（feed_aggregator），未配置时对应源自动禁用
-      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
-      RAINDROP_TOKEN: ${RAINDROP_TOKEN:-}
-      RSS_URLS: ${RSS_URLS:-}
-    volumes:
-      - ./console/backend/data:/app/data
-      - /opt/.bak/console-stack/personal-workbench:/app/workbench-backups
-      - ./console/assets.yaml:/app/assets.yaml
-      - ${CONSOLE_PANELS_HOST_PATH:-./console/panels.yaml}:/app/panels.yaml
-      - ./console/machines.yaml:/app/machines.yaml
-      # C10-b：设置页写回（白名单键，UI 可写）。仓库预置空文件——单文件 bind mount
-      # 在宿主端缺文件时会被 Docker 建成目录，容器内就写不进来了。
-      - ./console/settings.yaml:/app/settings.yaml
-      # D0-2：备份目录只读挂入，ops_status 才能报 last_backup_tag / last_deploy。
-      # 只读——仅宿主备份/部署控制器可写，应用容器无权改动回滚素材。
-      - ${CONSOLE_HOST_BACKUP_DIR:-/opt/.bak/console-stack}:/app/backup:ro
-      - ./.ssh-console:/root/.ssh:ro
-      # C2/W2 tailnet 卡（owner 拍板 2026-09-06：cron 导出文件方案）：
-      # 宿主 crontab 每 5 分钟 `tailscale status --json` 原子落盘到 ./runtime/tailnet/status.json，
-      # 容器只读挂载解析。不挂 tailscaled socket——LocalAPI 非只读，挂载即交出控制面。
-      # 代码侧 CONSOLE_TAILNET_STATUS_FILE 默认即 /app/tailnet/status.json。
-      - ./runtime/tailnet:/app/tailnet:ro
-      # C11：入口流量小卡（aly Caddy admin 经 NAS crontab 导出，同 cron 文件制）
-      - ./runtime/caddy:/app/caddy:ro
-      # 回退路径（默认不启用）：socket 直连会把 NAS 的 Tailscale 控制面交给无鉴权容器，禁用。
-      # - /var/run/tailscale/tailscaled.sock:/var/run/tailscaled.socket:ro
-    depends_on:
-      socket-proxy:
-        condition: service_started
-      console-postgres:
-        condition: service_healthy
-    ports:
-      # 宿主机统一 8081（与本地开发一致），容器内仍 8080
-      - "8081:8080"
-      # hindsight 根路径同源反代（tailscale serve 9443 → 此口），仅 tailnet
-      - "127.0.0.1:44683:44683"
     restart: unless-stopped
     security_opt:
       - no-new-privileges:true
+    environment:
+      SECRET_KEY: ${SECRET_KEY:-}
+      CONSOLE_AUTH_ENABLED: ${CONSOLE_AUTH_ENABLED:-false}
+      CONSOLE_AUTH_USER: ${CONSOLE_AUTH_USER:-admin}
+      CONSOLE_AUTH_PASSWORD: ${CONSOLE_AUTH_PASSWORD:-}
+      CONSOLE_STORAGE_ENGINE: postgres
+      # 单机独立实例即权威端（authority）：本机采集与业务写入。
+      CONSOLE_INSTANCE_ROLE: authority
+      CONSOLE_MAINTENANCE_MODE: ${CONSOLE_MAINTENANCE_MODE:-normal}
+      CONSOLE_PG_HOST: console-postgres
+      CONSOLE_PG_PORT: "5432"
+      CONSOLE_PG_DB: ${CONSOLE_PG_DB:-console}
+      CONSOLE_PG_USER: ${CONSOLE_PG_USER:-console_app}
+      CONSOLE_PG_PASSWORD: ${CONSOLE_PG_PASSWORD:?缺 CONSOLE_PG_PASSWORD（运行账号密码，见 .env.example）}
+      CONSOLE_MONITORING_ENROLL_TOKEN: ${CONSOLE_MONITORING_ENROLL_TOKEN:-}
+      HINDSIGHT_PROXY_PORT: "0"
+    volumes:
+      - console-data:/app/data
+    depends_on:
+      console-postgres:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:${CONSOLE_HTTP_PORT:-8081}:8080"
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:8080/api/health >/dev/null || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 15s
+      start_period: 20s
     networks:
       - console-net
 
-  # bark-server（NOTIFY-RES，2026-09-06 上线 → 2026-09-07 owner 裁决撤除）：
-  # 邮件通道已闭环（QQ SMTP，见 OPERATIONS「通知出口」），Bark 推送诉求撤回，
-  # 容器从上线到撤除始终未配 device key、零推送。服务定义已移除；NAS 侧容器由
-  # 部署后 `docker rm -f bark-server` 收掉（compose 不带 --remove-orphans，
-  # 光删定义不会停容器）。数据目录 ./bark-server/data 保留在 NAS 不删。
-  # 要恢复：git 历史取回本块（本提交之前的 docker-compose.yml）。
+volumes:
+  console-pgdata:
+  console-data:
 
 networks:
   console-net:
     driver: bridge
 
-# PG-04（提案 §6.2/§6.3）：PG 管理员密码 secret。文件在部署准备阶段由受限流程
-# 生成于 /vol1/console-stack-data/secrets，不进 Git/构建/文档；compose config 校验
-# （CI）用 docker-compose.ci.yml 覆盖为本地占位路径，不依赖生产 secret 存在。
 secrets:
   console_pg_admin:
-    file: /vol1/console-stack-data/secrets/pg-admin.password
+    file: ./secrets/pg-admin.password

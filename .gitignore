@@ -17,3 +17,7 @@ kernel/backend/data/
 *.db
 *.db-shm
 *.db-wal
+secrets/
+.env.*
+!.env.example
+.build-plugins/

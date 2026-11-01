@@ -16,11 +16,11 @@ import backup_db
 import backup_runtime as runtime
 from test_deploy_safety import (
     CURRENT_SCHEMA_VERSIONS,
-    copy_backend_module,
     FIXTURE_PANELS,
     SOURCE,
     TAG,
     commands,
+    copy_backend_module,
     db_values,
     fake_environment,
     git,

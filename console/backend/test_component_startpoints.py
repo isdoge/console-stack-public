@@ -173,7 +173,7 @@ def test_new_install_registry_survives_app_role_read(
         admin.execute(f'GRANT SELECT ON public.component_schema_migrations TO "{role}"')
         app = pg_test_support.connect(
             pg_container.dsn(dbname=databases["new_install"], user=role,
-                             password="pw-b7-test"), autocommit=True)
+                             password="pw-b7-start"), autocommit=True)
         try:
             report = cm.registry_report(app, components)
             assert report["ok"] is True, report["issues"]

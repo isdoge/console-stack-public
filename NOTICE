@@ -1034,9 +1034,13 @@ SOFTWARE.
 --------------------------------------------------------------------
 E. Notes / remaining gaps
 --------------------------------------------------------------------
-- Transitive npm packages (lockfile ~431 with license fields) are not each
-  inlined here; production direct deps above are. A future release may vendor
-  a machine-generated third-party report for the full lock closure.
+- Full dependency-closure license texts (npm production closure of the
+  frontend lockfile, Python runtime closure, Go modules linked into the Linux
+  agent) are machine-generated in THIRD_PARTY_LICENSES.txt
+  (scripts/gen_third_party_licenses.py). Items that could not be closed from
+  package-shipped files are listed in its GAPS section rather than claimed.
+- The image ships LICENSE, NOTICE and THIRD_PARTY_LICENSES.txt under /app and
+  /app/static (served as /LICENSE.txt, /NOTICE.txt, /THIRD_PARTY_LICENSES.txt).
 - psycopg-binary may ship additional native libraries; consult the wheel
   metadata for the exact build you distribute.
 - favicon.svg provenance remains “local SVG without upstream notice” per B7

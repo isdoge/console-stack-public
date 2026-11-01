@@ -14,11 +14,12 @@
 """
 import os
 import pathlib
-import shutil
 import subprocess
 import sys
 
 import pytest
+
+import backend_copy_support
 
 BACKEND_DIR = pathlib.Path(__file__).resolve().parent
 
@@ -31,13 +32,8 @@ _CHILD_CODE = "import app; print('STARTUP_OK')"
 
 
 def _copy_backend(dest):
-    """backend 的干净副本：不含 `data/`（等价新 checkout）、不含字节码缓存。"""
-    def _ignore(dirname, names):
-        return [n for n in names if n in ("__pycache__", "data") or n.endswith(".pyc")]
-
-    shutil.copytree(BACKEND_DIR, dest, ignore=_ignore)
-    shutil.copytree(BACKEND_DIR.parent.parent / "plugins", dest / "plugins", ignore=_ignore)
-    return dest
+    """kernel 真身 + 私人模块 + 插件（见 backend_copy_support）。"""
+    return backend_copy_support.copy_backend(dest)
 
 
 def _run_startup(backend_copy, **env_overrides):

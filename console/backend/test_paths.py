@@ -9,6 +9,8 @@ import subprocess
 import sys
 
 BACKEND_DIR = pathlib.Path(__file__).resolve().parent
+# paths/composition 真身在 kernel/backend；console 下是按仓库布局回指的 shim。
+KERNEL_BACKEND_DIR = pathlib.Path(__file__).resolve().parents[2] / "kernel" / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
 
 import paths  # noqa: E402
@@ -46,9 +48,9 @@ class TestPathRelocation:
         且导入是幂等的（目录已存在时 makedirs 不报错）。"""
         workdir = tmp_path / "checkout"
         workdir.mkdir()
-        shutil.copy(BACKEND_DIR / "paths.py", workdir / "paths.py")
+        shutil.copy(KERNEL_BACKEND_DIR / "paths.py", workdir / "paths.py")
         # paths 的组合根来自 composition 叶子模块；两者都随 checkout 移动。
-        shutil.copy(BACKEND_DIR / "composition.py", workdir / "composition.py")
+        shutil.copy(KERNEL_BACKEND_DIR / "composition.py", workdir / "composition.py")
 
         code = (
             "import paths, os\n"

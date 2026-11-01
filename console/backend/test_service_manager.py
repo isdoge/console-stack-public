@@ -299,17 +299,30 @@ class TestDockerCmdRemote:
         assert "`" not in payload
 
 
+
+def _reload_in_place(module):
+    """在同一模块对象上重跑 kernel 真身源码。
+
+    `console/backend/service_manager.py` 是 shim：`importlib.reload` 会重跑 shim，
+    shim 再把 sys.modules 换成新对象，测试持有的 `sm` 就成了失效引用（第二次 reload
+    报 "module service_manager not in sys.modules"）。这里按 `__file__`（真身路径）
+    原地重放，sys.modules 与其它模块持有的引用保持同一对象。
+    """
+    import importlib.util
+    spec = importlib.util.spec_from_file_location(module.__name__, module.__file__)
+    spec.loader.exec_module(module)
+
+
 class TestMachineSshNasEnvOverride:
     """When console runs off-NAS (mac/win dev machine), MACHINE_SSH_NAS env
     lets operators route nas-scoped services through SSH (recommended: Tailscale IP)."""
 
     def _reload_sm(self, monkeypatch, value):
-        import importlib
         if value is None:
             monkeypatch.delenv("MACHINE_SSH_NAS", raising=False)
         else:
             monkeypatch.setenv("MACHINE_SSH_NAS", value)
-        importlib.reload(sm)
+        _reload_in_place(sm)
 
     def test_default_none_uses_local_docker(self, monkeypatch):
         self._reload_sm(monkeypatch, None)
@@ -335,13 +348,12 @@ class TestMachineSshTxyAlyDefaults:
     env 可覆盖，留空回退到 Tailscale IP 默认值。"""
 
     def _reload_sm(self, monkeypatch, txy=None, aly=None):
-        import importlib
         for key, value in (("MACHINE_SSH_TXY", txy), ("MACHINE_SSH_ALY", aly)):
             if value is None:
                 monkeypatch.delenv(key, raising=False)
             else:
                 monkeypatch.setenv(key, value)
-        importlib.reload(sm)
+        _reload_in_place(sm)
 
     def test_default_uses_tailscale_ip(self, monkeypatch):
         self._reload_sm(monkeypatch, None, None)

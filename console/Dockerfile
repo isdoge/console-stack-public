@@ -75,6 +75,12 @@ ENV CONSOLE_INSTANCE_PROFILE=public
 ENV CONSOLE_COMPOSITION_FILE=/app/public-composition.json
 
 COPY --from=frontend-public /workspace/kernel/frontend/dist /app/static
+# 许可随附（B7 外部验收 t41u 缺口 4）：项目 LICENSE、第三方 NOTICE 与依赖闭包许可全文
+# 落到应用目录；前端分发目录（/app/static，对外可取）同带一份 .txt。
+COPY kernel/LICENSE kernel/NOTICE kernel/THIRD_PARTY_LICENSES.txt /app/
+COPY kernel/LICENSE /app/static/LICENSE.txt
+COPY kernel/NOTICE /app/static/NOTICE.txt
+COPY kernel/THIRD_PARTY_LICENSES.txt /app/static/THIRD_PARTY_LICENSES.txt
 
 # D0-1（C1 前置）：running commit 构建期注入。镜像里没有 .git，容器内 git rev-parse
 # 拿不到任何东西，ops_status 的 running_commit 因此长期恒 null。deploy.sh 在 build 前
@@ -119,6 +125,9 @@ COPY console/backend/beszel_api.py \
 COPY plugins /app/plugins
 COPY tools/personal-workbench /app/tools/personal-workbench
 COPY --from=frontend-personal /workspace/kernel/frontend/dist /app/static
+COPY kernel/LICENSE /app/static/LICENSE.txt
+COPY kernel/NOTICE /app/static/NOTICE.txt
+COPY kernel/THIRD_PARTY_LICENSES.txt /app/static/THIRD_PARTY_LICENSES.txt
 # 私人镜像层内预置仓库台账，避免未挂载时只剩公共空文件；生产仍以 bind-mount 为准。
 COPY console/assets.yaml /app/assets.yaml
 COPY console/machines.yaml /app/machines.yaml

@@ -12,6 +12,8 @@ import tarfile
 import pytest
 
 BACKEND_DIR = pathlib.Path(__file__).resolve().parent
+# paths/composition 真身在 kernel/backend；console 下是按仓库布局回指的 shim。
+KERNEL_BACKEND_DIR = pathlib.Path(__file__).resolve().parents[2] / "kernel" / "backend"
 sys.path.insert(0, str(BACKEND_DIR))
 
 import db  # noqa: E402
@@ -515,9 +517,9 @@ class TestDbBootstrap:
 
         workdir = tmp_path / "checkout"
         workdir.mkdir()
-        shutil.copy(BACKEND_DIR / "paths.py", workdir / "paths.py")
+        shutil.copy(KERNEL_BACKEND_DIR / "paths.py", workdir / "paths.py")
         # paths 的数据根由组合叶子模块决定（B7-1），两者一起复制才是一个完整 checkout。
-        shutil.copy(BACKEND_DIR / "composition.py", workdir / "composition.py")
+        shutil.copy(KERNEL_BACKEND_DIR / "composition.py", workdir / "composition.py")
         assert not (workdir / "data").exists()
 
         code = (
