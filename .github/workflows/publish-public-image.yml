@@ -1,0 +1,49 @@
+name: publish-public-image
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'console/Dockerfile'
+      - 'kernel/**'
+      - 'plugins/**'
+      - 'instance/public/**'
+      - 'theme/**'
+      - '.github/workflows/publish-public-image.yml'
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build-push:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Derive tags
+        id: meta
+        run: |
+          SHORT_SRC=$(cut -c1-7 .b7-source-sha)
+          TIP_SHORT=${GITHUB_SHA::7}
+          echo "tags=ghcr.io/${{ github.repository_owner }}/console-stack-public:${SHORT_SRC},ghcr.io/${{ github.repository_owner }}/console-stack-public:public-first,ghcr.io/${{ github.repository_owner }}/console-stack-public:sha-${TIP_SHORT}" >> "$GITHUB_OUTPUT"
+          echo "short_src=${SHORT_SRC}" >> "$GITHUB_OUTPUT"
+      - name: Build and push public image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: console/Dockerfile
+          target: public
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          provenance: false
+      - name: Record digest
+        run: |
+          docker buildx imagetools inspect "ghcr.io/${{ github.repository_owner }}/console-stack-public:${{ steps.meta.outputs.short_src }}"
